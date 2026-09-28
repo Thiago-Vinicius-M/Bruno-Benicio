@@ -1,0 +1,63 @@
+/* Exemplo 02 — Texto Scrubbed */
+
+.st-stage {
+  /* O palco é alto para dar bastante distância de scroll entre start e end */
+  padding-block: 30vh 10vh;
+  outline-offset: -1px;
+}
+
+.st-stage.is-trigger::before {
+  top: 12px;
+  left: var(--gutter);
+}
+
+.st-note {
+  max-width: 62ch;
+  color: var(--text-2);
+}
+
+.st-lines {
+  display: grid;
+  margin-block: 18vh;
+}
+
+/* Linhas empilhadas na mesma célula; flex + center deixa o texto (mais largo
+   que a tela) centralizado e "vazando" igualmente para os dois lados.
+   O corte do que vaza é feito pelo overflow-x: clip do <main>. */
+.st-line {
+  grid-area: 1 / 1;
+  display: flex;
+  justify-content: center;
+  font-size: clamp(3.4rem, 12vw, 12rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.st-line--ghost {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--line-strong);
+}
+
+.st-legend {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+/* HUD grudado na base da tela enquanto o palco estiver visível */
+.st-hud-wrap {
+  position: sticky;
+  bottom: calc(var(--dock-h) + 32px);
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 40vh;
+  padding-inline: var(--gutter);
+  pointer-events: none;
+}
+
+.st-hud {
+  width: min(360px, 100%);
+  pointer-events: auto;
+}

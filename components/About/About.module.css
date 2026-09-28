@@ -1,0 +1,74 @@
+.about {
+  padding-block-start: var(--space-lg);
+}
+
+.rows {
+  display: grid;
+  row-gap: var(--space-md);
+  margin-block-start: var(--space-lg);
+}
+
+.row {
+  --media-size: clamp(240px, 30vw, 384px);
+
+  display: grid;
+  grid-template-columns: var(--media-size) minmax(0, 1fr);
+  align-items: end;
+  column-gap: clamp(16px, 2vw, 28px);
+}
+
+.row[data-align="center"] {
+  align-items: center;
+}
+
+.row[data-media="end"] {
+  grid-template-columns: minmax(0, 1fr) var(--media-size);
+}
+
+.row[data-media="end"] .media {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.row[data-media="end"] .text {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: end;
+}
+
+.media {
+  width: 100%;
+  height: auto;
+  /* Garante a mesma proporção nas 3 fotos, mesmo que alguma seja trocada. */
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+/*
+ * Celular: foto e texto empilhados, a foto mantém o lado (início/fim) do desktop.
+ * Os seletores repetem [data-media="end"] para vencer a especificidade das regras acima.
+ */
+@media (max-width: 767px) {
+  .row,
+  .row[data-media="end"] {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 20px; /* folga para o parallax: foto e texto se aproximam até ~14px */
+  }
+
+  .row .media,
+  .row[data-media="end"] .media {
+    grid-column: 1;
+    grid-row: 1;
+    width: min(100%, 320px);
+  }
+
+  .row[data-media="end"] .media {
+    justify-self: end;
+  }
+
+  .row .text,
+  .row[data-media="end"] .text {
+    grid-column: 1;
+    grid-row: 2;
+  }
+}

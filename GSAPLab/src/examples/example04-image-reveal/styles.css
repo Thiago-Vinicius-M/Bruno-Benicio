@@ -1,0 +1,60 @@
+/* Exemplo 04 — Imagem Reveal / Clip
+   Tudo aqui é CSS "estático". O que anima (clipPath, scale, opacity) está no
+   animation.ts. */
+
+.rv-stage {
+  padding-block: 25vh 45vh;
+}
+
+.rv-figure {
+  margin: 0;
+}
+
+/* moldura: reserva o espaço (aspect-ratio) e corta a imagem ampliada */
+.rv-clip {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--bg-2);
+}
+
+.rv-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.rv-caption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: baseline;
+  margin-top: 18px;
+  color: var(--text-2);
+}
+
+.rv-hud-wrap {
+  position: sticky;
+  bottom: calc(var(--dock-h) + 32px);
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 30vh;
+  pointer-events: none;
+}
+
+.rv-hud {
+  width: min(420px, 100%);
+  pointer-events: auto;
+}
+
+.rv-hud .readout__value {
+  overflow-wrap: anywhere;
+  font-size: 11.5px;
+}
+
+@media (max-width: 767px) {
+  /* Mobile: moldura em pé, ocupa mais altura da tela */
+  .rv-clip {
+    aspect-ratio: 4 / 5;
+  }
+}

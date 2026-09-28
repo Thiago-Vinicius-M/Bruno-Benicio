@@ -1,0 +1,55 @@
+/*
+ * Toda a composição deriva de --hero-w (largura do logo de fundo), com as proporções do
+ * Figma (logo 1820px · foto 1402px · foto 141px abaixo do topo · logo 26px acima do topo).
+ * O limite em vh evita que, em telas baixas (ex.: 1366×768), a foto passe muito da dobra.
+ */
+.hero {
+  --hero-w: min(100% - 2 * var(--page-gutter), 1040px, 120vh);
+
+  position: relative;
+  overflow: hidden;
+  padding-block: calc(var(--hero-w) * 0.0775) var(--space-lg);
+}
+
+/* Imagem de fundo: centralizada e levemente cortada no topo da seção. */
+.backdrop {
+  position: absolute;
+  top: calc(var(--hero-w) * -0.0143);
+  inset-inline: 0;
+  width: var(--hero-w);
+  height: auto;
+  margin-inline: auto;
+}
+
+.photo {
+  position: relative;
+  width: calc(var(--hero-w) * 0.77);
+  height: auto;
+  margin-inline: auto;
+}
+
+.title {
+  position: relative;
+  text-align: center;
+}
+
+/*
+ * Máscara de cada palavra do título (animação de stagger): esconde o texto enquanto ele
+ * sobe. O padding dá respiro para a rotação não cortar as letras e a margem negativa
+ * anula esse padding, então a posição do texto não muda. vertical-align: top evita que
+ * o overflow: hidden desloque a linha de base e aumente a altura da linha.
+ */
+.mask {
+  display: inline-block;
+  overflow: hidden;
+  padding: 0.04em 0.06em 0.08em;
+  margin: -0.04em -0.06em -0.08em;
+  vertical-align: top;
+}
+
+/* transforms (y, rotation) só funcionam em elementos que não são "inline" */
+.word,
+.char {
+  display: inline-block;
+  transform-origin: 0% 100%;
+}

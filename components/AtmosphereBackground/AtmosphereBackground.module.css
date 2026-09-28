@@ -1,0 +1,153 @@
+/*
+ * Atmosfera de fundo. Todos os valores vêm de custom properties (--atm-*) geradas a partir
+ * de atmosphereConfig.ts — aqui só existe a ESTRUTURA das camadas.
+ *
+ * Divisão de responsabilidades (importante para o GSAP):
+ *   .layer (externa)  → alvo público das animações: transform e opacity ficam LIVRES
+ *   .glow / .particle → forma e valores do config (posição, tamanho, cor, opacidade)
+ * A opacidade final é a multiplicação das duas, então animar a camada nunca apaga o config.
+ */
+.root {
+  --atm-intensity: var(--atm-intensity-base);
+  --atm-size-scale: 1;
+
+  /* z-index -1: pinta depois do fundo do body e antes de todo o conteúdo da página. */
+  z-index: -1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  /* Nada daqui afeta o layout da página nem é repintado quando a página muda. */
+  contain: strict;
+}
+
+/* Cobre a tela e fica parada enquanto o conteúdo rola por cima. */
+.viewport {
+  position: fixed;
+}
+
+/* Cobre só o elemento pai (que precisa de position: relative e isolation: isolate). */
+.container {
+  position: absolute;
+}
+
+.base,
+.texture,
+.layer,
+.beam,
+.vignette,
+.grain {
+  position: absolute;
+  inset: 0;
+}
+
+.base {
+  background: radial-gradient(
+    ellipse 120% 90% at 50% 40%,
+    var(--atm-base-center),
+    var(--atm-base-edge)
+  );
+}
+
+/*
+ * Superfície (concreto) sobre a base. É estática: o blend é calculado uma vez e o scroll
+ * só recompõe a camada. O opacity fica no config (var); o GSAP anima transform/escala.
+ */
+.texture {
+  background-image: var(--atm-texture-image);
+  background-size: var(--atm-texture-size);
+  background-position: center;
+  opacity: var(--atm-texture-opacity);
+  mix-blend-mode: var(--atm-texture-blend);
+}
+
+/* Glows e haze: elipse com degradê radial que decai até zero na borda. */
+.glow {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: calc(var(--size) * var(--atm-size-scale));
+  aspect-ratio: var(--ratio);
+  /* translate (e não transform) centraliza: o transform do elemento continua livre. */
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgb(var(--rgb) / 1) 0%,
+    rgb(var(--rgb) / 0.45) var(--mid),
+    rgb(var(--rgb) / 0) 100%
+  );
+  opacity: calc(var(--opacity) * var(--atm-intensity));
+}
+
+.warm {
+  --rgb: var(--atm-warm-rgb);
+  --x: var(--atm-warm-x);
+  --y: var(--atm-warm-y);
+  --size: var(--atm-warm-size);
+  --ratio: var(--atm-warm-ratio);
+  --opacity: var(--atm-warm-opacity);
+  --mid: var(--atm-warm-mid);
+}
+
+.red {
+  --rgb: var(--atm-red-rgb);
+  --x: var(--atm-red-x);
+  --y: var(--atm-red-y);
+  --size: var(--atm-red-size);
+  --ratio: var(--atm-red-ratio);
+  --opacity: var(--atm-red-opacity);
+  --mid: var(--atm-red-mid);
+}
+
+.haze {
+  --rgb: var(--atm-haze-rgb);
+  --x: var(--atm-haze-x);
+  --y: var(--atm-haze-y);
+  --size: var(--atm-haze-size);
+  --ratio: var(--atm-haze-ratio);
+  --opacity: var(--atm-haze-opacity);
+  --mid: var(--atm-haze-mid);
+}
+
+/* O degradê cônico e a máscara de cada feixe vêm inline (beamStyle). */
+.beam {
+  opacity: calc(var(--atm-beam-opacity) * var(--atm-intensity));
+}
+
+/*
+ * Bokeh: o desfoque é o próprio degradê (núcleo → transparente), sem filter: blur —
+ * nada de custo de filtro por partícula, nem quando elas forem animadas.
+ */
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle closest-side,
+    rgb(var(--rgb) / 1) var(--atm-particle-core),
+    rgb(var(--rgb) / 0) 100%
+  );
+  opacity: calc(var(--opacity) * var(--atm-intensity));
+}
+
+.vignette {
+  background: var(--atm-vignette-image);
+}
+
+.grain {
+  background-image: var(--atm-grain-image);
+  background-size: var(--atm-grain-size);
+  opacity: var(--atm-grain-opacity);
+}
+
+/* Celular: luzes um pouco menores e mais fracas, menos partículas. */
+@media (max-width: 767px) {
+  .root {
+    --atm-intensity: calc(var(--atm-intensity-base) * var(--atm-mobile-intensity));
+    --atm-size-scale: var(--atm-mobile-glow-scale);
+  }
+
+  .particle[data-desktop-only] {
+    display: none;
+  }
+}

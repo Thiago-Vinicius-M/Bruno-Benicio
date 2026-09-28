@@ -1,0 +1,10 @@
+.contact {
+  padding-block: var(--space-3xl) var(--space-4xl);
+}
+
+/* Uma linha em branco entre cada contato. */
+.list {
+  display: grid;
+  row-gap: calc(var(--text-body) * var(--leading-body));
+  margin-block-start: var(--space-2xs);
+}

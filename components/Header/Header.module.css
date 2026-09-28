@@ -1,0 +1,86 @@
+/* Fixa no topo ao rolar; o fundo semitransparente + blur desfoca o conteúdo que passa por trás. */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgb(24 26 32 / 0.6); /* --color-header-background com transparência */
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+/* Logo centralizado; os dois grupos de links se afastam dele com o mesmo espaçamento. */
+.nav {
+  --nav-gap: clamp(16px, 4.5vw, 72px);
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--nav-gap);
+  height: var(--header-height);
+  padding-inline: var(--page-gutter);
+}
+
+.list {
+  display: flex;
+  column-gap: var(--nav-gap);
+}
+
+.listStart {
+  justify-content: flex-end;
+}
+
+.listEnd {
+  justify-content: flex-start;
+}
+
+.logo {
+  display: block;
+  width: 120px;
+  height: auto;
+}
+
+.list a {
+  white-space: nowrap;
+  transition: color 0.25s ease;
+}
+
+/* Seção atual (aria-current, definido por useActiveSection). */
+.list a[aria-current] {
+  color: var(--color-accent);
+}
+
+/* Tablet e celular: mesma composição lateral, com fonte, espaçamentos e logo menores. */
+@media (max-width: 1023px) {
+  .nav {
+    --nav-gap: clamp(8px, 2.6vw, 24px);
+  }
+
+  .list a {
+    font-size: clamp(0.5625rem, 0.25rem + 1.15vw, 0.75rem);
+    letter-spacing: 0.08em;
+  }
+
+  .logo {
+    width: clamp(64px, 12vw, 104px);
+  }
+}
+
+@media (max-width: 767px) {
+  .nav {
+    --nav-gap: 8px;
+
+    padding-inline: 10px;
+  }
+
+  .list {
+    column-gap: 6px;
+  }
+
+  .list a {
+    letter-spacing: 0.03em;
+  }
+
+  .logo {
+    width: 56px;
+  }
+}

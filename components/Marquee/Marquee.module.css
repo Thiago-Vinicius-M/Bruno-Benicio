@@ -1,0 +1,33 @@
+.marquee {
+  overflow: hidden;
+  padding-block: clamp(12px, 1.2vw, 20px);
+}
+
+/*
+ * Faixa mais larga que a tela, deslocada para a esquerda.
+ * Medidas em em (relativas ao tamanho do texto), então a composição acompanha a fonte.
+ */
+.track {
+  display: flex;
+  align-items: center;
+  column-gap: 0.2em;
+  width: max-content;
+  margin-inline-start: -4.9em;
+  font-size: var(--text-marquee);
+}
+
+.text {
+  flex: none;
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  letter-spacing: var(--tracking-display);
+  white-space: nowrap;
+}
+
+/* Ícone de cerveja, proporcional ao texto (94px com texto de 160px no Figma). */
+.icon {
+  flex: none;
+  width: 0.45em;
+  height: 0.45em;
+}

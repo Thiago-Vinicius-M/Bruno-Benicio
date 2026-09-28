@@ -1,0 +1,159 @@
+/* Exemplo 01 — Fade + Slide */
+
+.fs-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr);
+  gap: clamp(24px, 4vw, 64px);
+}
+
+/* Espaço vertical antes/depois do bloco para você conseguir cruzar
+   start e end rolando nos dois sentidos */
+.fs-track {
+  padding-block: 70vh;
+}
+
+.fs-trigger {
+  display: grid;
+  align-content: center;
+  min-height: 50vh;
+  padding: clamp(24px, 4vw, 56px);
+  border-radius: var(--radius);
+  background: var(--bg-1);
+}
+
+.fs-title {
+  margin-top: 14px;
+  font-size: clamp(2.4rem, 6.4vw, 5.8rem);
+  font-weight: 700;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.fs-text {
+  margin-top: 22px;
+  max-width: 52ch;
+  color: var(--text-2);
+  font-size: clamp(1rem, 1.4vw, 1.15rem);
+}
+
+.fs-text strong {
+  color: var(--text);
+}
+
+/* Log de callbacks: sticky para continuar visível enquanto você rola */
+.fs-log {
+  position: sticky;
+  top: 16vh;
+  align-self: start;
+  margin-top: 30vh;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgb(17 17 21 / 0.94);
+  font-size: 14px;
+}
+
+.fs-log__title {
+  font: 600 12px/1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.fs-log__speed {
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.fs-log__list {
+  display: grid;
+  gap: 6px;
+  min-height: 7.5em;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.fs-log__list li {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.fs-log__list li:first-child {
+  color: var(--text);
+}
+
+.fs-log__list li:not(:first-child) {
+  opacity: 0.55;
+}
+
+.fs-log__list strong {
+  color: var(--accent);
+}
+
+.fs-log__list strong[data-action="none"] {
+  color: var(--text-3);
+}
+
+.fs-log__list strong[data-action="reverse"],
+.fs-log__list strong[data-action="reset"],
+.fs-log__list strong[data-action="pause"] {
+  color: var(--alt);
+}
+
+.fs-log__legend {
+  display: grid;
+  gap: 6px;
+  margin: 16px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+
+.fs-log__legend div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.fs-log__legend dd {
+  margin: 0;
+  text-align: right;
+}
+
+@media (max-width: 1023px) {
+  /* Uma coluna: log e bloco dividem a mesma célula do grid. O log fica
+     "grudado" na base da tela (sticky bottom) enquanto o palco está visível. */
+  .fs-stage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fs-track,
+  .fs-log {
+    grid-area: 1 / 1;
+  }
+
+  .fs-log {
+    z-index: 2;
+    top: auto;
+    bottom: calc(var(--dock-h) + 28px);
+    align-self: end;
+    margin: 0;
+    padding: 12px 14px;
+  }
+
+  .fs-log__list {
+    min-height: 0;
+    max-height: 4.8em;
+    overflow: hidden;
+  }
+
+  .fs-log__legend {
+    display: none;
+  }
+}

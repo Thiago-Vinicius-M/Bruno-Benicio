@@ -1,0 +1,99 @@
+/* Exemplo 06 — Vídeo controlado pelo scroll */
+
+/* O TRILHO: altura = N telas. É ele que dá "distância de scroll".
+   --screens vem do painel (style inline no componente). */
+.vs-track {
+  --screens: 3;
+  height: calc(var(--screens) * 100vh);
+  height: calc(var(--screens) * 100svh);
+}
+
+.vs-track.is-trigger {
+  outline-offset: -1px;
+}
+
+.vs-track.is-trigger::before {
+  top: 12px;
+  left: var(--gutter);
+}
+
+/* position: sticky mantém o vídeo parado na tela enquanto o trilho passa */
+.vs-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: center;
+}
+
+.vs-media {
+  position: relative;
+  /* reserva o espaço ANTES do metadata: sem layout shift */
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-2);
+}
+
+.vs-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vs-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgb(0 0 0 / 0.6);
+  font: 500 11px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 1023px) {
+  .vs-sticky {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: center;
+    gap: 14px;
+  }
+
+  .vs-hud {
+    gap: 8px;
+    padding: 12px 14px;
+  }
+}
+
+@media (max-width: 767px) {
+  .vs-media {
+    aspect-ratio: 4 / 5;
+  }
+
+  /* No mobile o HUD fica menor para caber junto do vídeo na tela */
+  .vs-sticky {
+    padding-bottom: calc(var(--dock-h) + 16px);
+  }
+
+  .vs-media {
+    max-height: 52svh;
+    width: 100%;
+  }
+}
+
+/* Movimento reduzido: sem trilho e sem sticky — o vídeo vira um vídeo comum
+   com controles (o JS liga video.controls nesse caso). */
+@media (prefers-reduced-motion: reduce) {
+  .vs-track {
+    height: auto;
+    padding-block: 10vh;
+  }
+
+  .vs-sticky {
+    position: static;
+    height: auto;
+  }
+}

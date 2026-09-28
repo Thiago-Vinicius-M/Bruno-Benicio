@@ -1,0 +1,204 @@
+/*
+ * Design tokens — valores extraídos do FrontBruto (Figma) e da referência
+ * renderizada (Imagens/Referencia.png), desenhada em 1920px de largura.
+ */
+:root {
+  /* Cores */
+  --color-background: #181b20;
+  --color-header-background: #181a20;
+  --color-foreground: #ffffff; /* Figma: Backgrounds/Primary */
+  --color-foreground-muted: rgb(255 255 255 / 0.8);
+  --color-border: #fffefe;
+  --color-accent: rgb(255 195 66); /* destaque: títulos de seção e seção atual na top bar */
+
+  /*
+   * Tipografia
+   * Famílias: display (títulos/impacto) · body (conteúdo e interface) · editorial (raro).
+   * Pesos: apenas os carregados em app/layout.tsx.
+   * Tamanhos: fluidos com clamp(mín, preferido, máx) — o máximo é o valor em 1920px na
+   * escala de navegador (≈ 55–60% dos valores do Figma) e o mínimo mantém a leitura em ~390px.
+   */
+  --font-display: var(--font-barlow-condensed), sans-serif;
+  --font-body: var(--font-manrope), sans-serif;
+  --font-editorial: var(--font-dm-serif-display), serif;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --text-nav: 0.875rem;
+  --text-body: clamp(1rem, 0.8rem + 0.55vw, 1.375rem);
+  --text-caption: clamp(1.125rem, 0.9rem + 0.6vw, 1.625rem);
+  --text-title: clamp(2rem, 1.2rem + 1.8vw, 3rem);
+  --text-display: clamp(2rem, 0.9rem + 2.6vw, 3.75rem);
+  --text-editorial: clamp(1.75rem, 1rem + 1.6vw, 2.75rem);
+  --text-marquee: clamp(3rem, 1rem + 5vw, 6rem);
+
+  --leading-body: 1.35;
+
+  --tracking-display: 0.01em;
+  --tracking-nav: 0.14em;
+  --tracking-body: -0.01em;
+
+  /* Grid */
+  --header-height: 88px;
+  --page-gutter: clamp(20px, 4vw, 48px);
+  --container-narrow-max: 1080px;
+  --container-max: 1200px;
+  --container-wide-max: 1280px;
+
+  /*
+   * Espaçamentos verticais — o máximo é atingido por volta de 1600px de largura;
+   * abaixo disso diminuem com a tela até o mínimo (mobile).
+   */
+  --space-3xs: 12px;
+  --space-2xs: 20px;
+  --space-xs: clamp(28px, 2.5vw, 40px);
+  --space-sm: clamp(36px, 3.5vw, 56px);
+  --space-md: clamp(40px, 4vw, 64px);
+  --space-lg: clamp(48px, 5vw, 80px);
+  --space-xl: clamp(52px, 5.5vw, 88px);
+  --space-2xl: clamp(64px, 7vw, 112px);
+  --space-3xl: clamp(80px, 9vw, 144px);
+  --space-4xl: clamp(96px, 12.5vw, 200px);
+}
+
+/* Celular: topbar mais baixa (logo e links menores). */
+@media (max-width: 767px) {
+  :root {
+    --header-height: 60px;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Links de âncora (#sobre-nos...) param abaixo da top bar fixa, sem ficar escondidos atrás dela. */
+  scroll-padding-top: var(--header-height);
+}
+
+body {
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-body);
+  font-weight: var(--weight-regular);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+figure {
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+ul {
+  padding: 0;
+  list-style: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Layout */
+.container,
+.container-narrow,
+.container-wide {
+  width: min(100% - 2 * var(--page-gutter), var(--container-max));
+  margin-inline: auto;
+}
+
+.container-narrow {
+  width: min(100% - 2 * var(--page-gutter), var(--container-narrow-max));
+}
+
+.container-wide {
+  width: min(100% - 2 * var(--page-gutter), var(--container-wide-max));
+}
+
+/* Escala tipográfica */
+
+/* Navegação: pequena e discreta, secundária ao Hero. */
+.type-nav {
+  font-family: var(--font-body);
+  font-size: var(--text-nav);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  letter-spacing: var(--tracking-nav);
+}
+
+/* Títulos de seção: SOBRE NÓS, VIDEOS, MODELOS, CONTATO. */
+.type-title {
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  letter-spacing: var(--tracking-display);
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--color-accent);
+}
+
+/* Título de impacto do Hero. */
+.type-display {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: var(--weight-semibold);
+  line-height: 1.15;
+  letter-spacing: var(--tracking-display);
+  text-transform: uppercase;
+  color: var(--color-foreground-muted);
+}
+
+/* Frase de destaque editorial — uso restrito. */
+.type-editorial {
+  font-family: var(--font-editorial);
+  font-size: var(--text-editorial);
+  font-weight: var(--weight-regular);
+  line-height: 1.15;
+  color: var(--color-foreground-muted);
+}
+
+/* Texto corrido. */
+.type-body {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body);
+}
+
+/* Títulos dos cards (Modelos). */
+.type-caption {
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  line-height: 1.2;
+  letter-spacing: var(--tracking-display);
+}

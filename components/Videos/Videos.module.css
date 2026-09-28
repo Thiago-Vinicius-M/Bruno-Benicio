@@ -1,0 +1,187 @@
+.videos {
+  padding-block-end: var(--space-2xl);
+}
+
+/*
+ * Palco da timeline cinematic: trigger + pin (não animado). position: relative é a
+ * referência (offsetTop) usada para centralizar a frase na tela.
+ */
+.stage {
+  position: relative;
+  padding-block-start: var(--space-sm);
+}
+
+/* Fica na frente dos vídeos enquanto está no centro da tela. */
+.intro {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  text-shadow: 0 2px 24px rgb(0 0 0 / 0.85);
+}
+
+.title {
+  margin-block-start: var(--space-2xl);
+}
+
+/*
+ * A coluna da direita fica deslocada para baixo (layout em escada).
+ * Deslocamento e gaps acompanham a largura das miniaturas (≈ 54% da altura de cada uma).
+ */
+.grid {
+  --stagger: clamp(48px, 9vw, 150px);
+
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(24px, 6.5vw, 104px) clamp(20px, 5.5vw, 88px);
+  margin-block-start: var(--space-xl);
+  padding-block-end: var(--stagger);
+}
+
+.item {
+  position: relative;
+}
+
+.item:nth-child(even) {
+  inset-block-start: var(--stagger);
+}
+
+/* Card em destaque (mouse em cima / centralizado no carrossel) fica por cima dos vizinhos. */
+.item[data-engaged="true"] {
+  z-index: 1;
+}
+
+.card {
+  position: relative;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.item[data-engaged="true"] .card {
+  transform: scale(1.06);
+}
+
+.frame {
+  overflow: hidden;
+  background: #000;
+}
+
+.thumbnail {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+/* Em tela cheia a imagem aparece inteira, sem cortes. */
+.frame:fullscreen {
+  display: grid;
+  place-items: center;
+}
+
+.frame:fullscreen .thumbnail {
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Botões de som e tela cheia: aparecem com o destaque ou com foco do teclado. */
+.controls {
+  position: absolute;
+  inset-block-end: 12px;
+  inset-inline-end: 12px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+  pointer-events: none;
+}
+
+.item[data-engaged="true"] .controls,
+.card:focus-within .controls {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.control {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 0.25);
+  border-radius: 50%;
+  background: rgb(24 27 32 / 0.7);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--color-foreground);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.control:hover:not(:disabled),
+.control:focus-visible {
+  background: rgb(24 27 32 / 0.95);
+}
+
+.control:focus-visible {
+  outline: 2px solid var(--color-foreground);
+  outline-offset: 2px;
+}
+
+.control:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.control svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.closing {
+  margin-block-start: var(--space-sm);
+}
+
+/*
+ * Celular: a escada vira um carrossel arrastável para os lados. O card centralizado
+ * recebe o destaque (cresce e mostra os botões), como o hover no desktop.
+ */
+@media (max-width: 767px) {
+  .grid {
+    display: flex;
+    gap: 16px;
+    margin-inline: calc(-1 * var(--page-gutter));
+    padding: 16px var(--page-gutter);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--page-gutter);
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .item {
+    flex: 0 0 80%;
+    scroll-snap-align: center;
+  }
+
+  .item:nth-child(even) {
+    inset-block-start: 0;
+  }
+
+  .control {
+    width: 36px;
+    height: 36px;
+  }
+}
