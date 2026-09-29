@@ -6,7 +6,8 @@
     "dev": "node node_modules/next/dist/bin/next dev",
     "build": "node node_modules/next/dist/bin/next build",
     "start": "node node_modules/next/dist/bin/next start",
-    "lint": "node node_modules/eslint/bin/eslint.js"
+    "lint": "node node_modules/eslint/bin/eslint.js",
+    "test": "node node_modules/vitest/vitest.mjs run"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
@@ -16,11 +17,15 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@testing-library/react": "^16.3.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
-    "typescript": "^5"
+    "jsdom": "^29.1.1",
+    "typescript": "^5",
+    "vite": "^7.3.6",
+    "vitest": "~4.0.18"
   }
 }

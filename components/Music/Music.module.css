@@ -1,0 +1,251 @@
+/*
+ * Seção MÚSICAS
+ *
+ *   Desktop (≥ 1024px) → player à esquerda, lista + botão do Spotify à direita
+ *   Tablet (768–1023)  → empilhado; player alto (352px) e lista em duas colunas
+ *   Celular (≤ 767px)  → empilhado; player compacto (152px) e lista em uma coluna
+ *
+ * Ajustes visuais rápidos ficam nas variáveis de .music.
+ */
+.music {
+  --music-line: rgb(255 195 66 / 0.14); /* divisórias e bordas */
+  --music-glow: rgb(255 255 255 / 0.1); /* luz atrás do player (--color-accent com alpha) */
+  --music-glow-spread: -18%; /* quanto a luz passa da moldura (negativo = maior) */
+
+  padding-block-end: var(--space-2xl);
+  /* A luz atrás do player passa da moldura: nunca pode gerar scroll lateral. */
+  overflow-x: clip;
+}
+
+.stage {
+  position: relative;
+}
+
+.intro {
+  display: grid;
+  justify-items: center;
+  row-gap: var(--space-3xs);
+  text-align: center;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-md) clamp(32px, 5vw, 72px);
+  margin-block-start: var(--space-lg);
+}
+
+/* Contexto próprio para a luz ficar atrás da moldura sem ir para trás da página. */
+.stageLight {
+  position: relative;
+  isolation: isolate;
+}
+
+.glow {
+  position: absolute;
+  inset: var(--music-glow-spread);
+  z-index: -1;
+  background: radial-gradient(closest-side, var(--music-glow), transparent);
+  pointer-events: none;
+}
+
+.side {
+  display: grid;
+  row-gap: var(--space-xs);
+  min-width: 0;
+}
+
+/* Lista estilo setlist: número, nome e um ícone na música selecionada. */
+.tracks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-block-start: 1px solid var(--music-line);
+}
+
+.tracks li {
+  border-block-end: 1px solid var(--music-line);
+}
+
+.track {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 16px;
+  align-items: center;
+  column-gap: 16px;
+  width: 100%;
+  min-height: 56px; /* área de toque confortável */
+  padding: 12px 8px 12px 16px;
+  border: 0;
+  background: transparent;
+  color: var(--color-foreground-muted);
+  text-align: start;
+  cursor: pointer;
+  transition:
+    color 0.25s ease,
+    background 0.25s ease;
+}
+
+/* Traço de destaque à esquerda: cresce na selecionada, insinua no hover. */
+.track::before {
+  content: "";
+  position: absolute;
+  inset-block: 10px;
+  inset-inline-start: 0;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--color-foreground);
+  transform: scaleY(0);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.trackNumber {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-nav);
+  font-variant-numeric: tabular-nums;
+  color: rgb(255 255 255 / 0.6);
+  transition: color 0.25s ease;
+}
+
+.trackTitle {
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.trackIcon {
+  width: 16px;
+  height: 16px;
+  fill: var(--color-accent);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.track:hover {
+  color: var(--color-foreground);
+  background: rgb(255 255 255 / 0.03);
+}
+
+.track:hover::before {
+  transform: scaleY(0.4);
+}
+
+.track[aria-pressed="true"] {
+  color: var(--color-foreground);
+  background: linear-gradient(90deg, rgb(255 255 255 / 0.06), transparent 70%);
+}
+
+.track[aria-pressed="true"]::before {
+  transform: scaleY(1);
+}
+
+.track[aria-pressed="true"] .trackNumber {
+  color: var(--color-accent);
+}
+
+.track[aria-pressed="true"] .trackIcon {
+  opacity: 1;
+}
+
+.track:focus-visible,
+.cta:focus-visible {
+  outline: 2px solid var(--color-foreground);
+  outline-offset: 2px;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 10px;
+  min-height: 44px;
+  padding: 12px 22px;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  border-radius: 999px;
+  transition:
+    color 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease;
+}
+
+.cta svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.25s ease;
+}
+
+.cta:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  background: rgb(255 195 66 / 0.06);
+}
+
+.cta:hover svg {
+  transform: translate(2px, -2px);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Tablet: empilha; a lista ocupa duas colunas para não alongar a seção. */
+@media (max-width: 1023px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tracks {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+  }
+
+  .cta {
+    justify-self: center;
+  }
+}
+
+/* Celular: player compacto (SpotifyPlayer variant "adaptive") e lista em uma coluna. */
+@media (max-width: 767px) {
+  .music {
+    --music-radius: 18px;
+    --music-glow-spread: -8%;
+  }
+
+  .tracks {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .track {
+    column-gap: 12px;
+    min-height: 52px;
+    padding-inline-start: 14px;
+  }
+
+  .cta {
+    justify-self: stretch;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track,
+  .track::before,
+  .trackNumber,
+  .trackIcon,
+  .cta,
+  .cta svg {
+    transition: none;
+  }
+}

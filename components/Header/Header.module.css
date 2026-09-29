@@ -8,29 +8,36 @@
   backdrop-filter: blur(16px);
 }
 
-/* Logo centralizado; os dois grupos de links se afastam dele com o mesmo espaçamento. */
+/*
+ * Logo exatamente no centro, com os dois grupos de links simétricos em volta dele.
+ *
+ * Os grupos têm textos de tamanhos diferentes ("VIDEOS/MÚSICAS" é bem mais longo), então
+ * as duas colunas 1fr precisam ter a MESMA largura — a do grupo mais largo:
+ *   · width: fit-content → a nav tem a largura do conteúdo, e nesse cálculo cada 1fr vale
+ *     o maior dos grupos. Em telas estreitas, fit-content vira a largura disponível e as
+ *     colunas continuam iguais (metade cada).
+ *   · dentro de cada coluna os links se distribuem (space-between): as bordas externas dos
+ *     dois grupos ficam à mesma distância do logo.
+ */
 .nav {
   --nav-gap: clamp(16px, 4.5vw, 72px);
+  --nav-tracking: var(--tracking-nav);
 
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   column-gap: var(--nav-gap);
+  width: fit-content;
+  max-width: 100%;
   height: var(--header-height);
+  margin-inline: auto;
   padding-inline: var(--page-gutter);
 }
 
 .list {
   display: flex;
+  justify-content: space-between;
   column-gap: var(--nav-gap);
-}
-
-.listStart {
-  justify-content: flex-end;
-}
-
-.listEnd {
-  justify-content: flex-start;
 }
 
 .logo {
@@ -39,7 +46,14 @@
   height: auto;
 }
 
+/*
+ * letter-spacing também entra DEPOIS da última letra: a margem negativa tira essa sobra,
+ * para a caixa do link terminar onde o texto termina (distâncias ao logo e às bordas exatas).
+ */
 .list a {
+  display: block;
+  margin-inline-end: calc(-1 * var(--nav-tracking));
+  letter-spacing: var(--nav-tracking);
   white-space: nowrap;
   transition: color 0.25s ease;
 }
@@ -49,15 +63,25 @@
   color: var(--color-accent);
 }
 
+/*
+ * Desktop estreito: com o espaçamento cheio, o grupo mais longo (VIDEOS/MÚSICAS) não cabe
+ * na metade dele e passaria do limite, quebrando a simetria. Links um pouco mais próximos.
+ */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .list {
+    column-gap: 3vw;
+  }
+}
+
 /* Tablet e celular: mesma composição lateral, com fonte, espaçamentos e logo menores. */
 @media (max-width: 1023px) {
   .nav {
     --nav-gap: clamp(8px, 2.6vw, 24px);
+    --nav-tracking: 0.08em;
   }
 
   .list a {
     font-size: clamp(0.5625rem, 0.25rem + 1.15vw, 0.75rem);
-    letter-spacing: 0.08em;
   }
 
   .logo {
@@ -68,16 +92,13 @@
 @media (max-width: 767px) {
   .nav {
     --nav-gap: 8px;
+    --nav-tracking: 0.03em;
 
     padding-inline: 10px;
   }
 
   .list {
     column-gap: 6px;
-  }
-
-  .list a {
-    letter-spacing: 0.03em;
   }
 
   .logo {

@@ -3,21 +3,10 @@
 import { useEffect, useRef } from "react";
 import { useGSAP } from "@/animations/gsap";
 import { createCinematicTimeline, scrollToCinematicEnd } from "@/animations/cinematicTimeline";
-import thumbAmigo from "@/Imagens/thumbAmigo.jpg";
-import thumbFoiDeus from "@/Imagens/thumbFoiDeus.jpg";
-import thumbManeiraErrada from "@/Imagens/thumbManeiraErrada.jpg";
-import thumbSoProMeuPrazer from "@/Imagens/thumbSoProMeuPrazer (1).jpg";
-import { VideoCard, type Video } from "./VideoCard";
+import { VideoGallery } from "@/components/VideoGallery/VideoGallery";
+import { VIDEOS } from "./videoList";
 import { VIDEOS_CINEMATIC } from "./videosCinematic";
 import styles from "./Videos.module.css";
-
-// Para usar o vídeo no lugar da thumbnail, informe `src` (ex.: "/videos/foi-deus.mp4").
-const VIDEOS: Video[] = [
-  { title: "Só Pro Meu Prazer", thumbnail: thumbSoProMeuPrazer },
-  { title: "Foi Deus", thumbnail: thumbFoiDeus },
-  { title: "Maneira Errada", thumbnail: thumbManeiraErrada },
-  { title: "Amigo", thumbnail: thumbAmigo },
-];
 
 const SECTION_ID = "videos";
 
@@ -30,16 +19,16 @@ export function Videos() {
   const stageRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLParagraphElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const gridRef = useRef<HTMLUListElement>(null);
+  const galleryRef = useRef<HTMLDivElement>(null);
 
-  // O stage é o trigger e fica pinado (não é animado); frase, grade e título são os alvos.
+  // O stage é o trigger e fica pinado (não é animado); frase, galeria e título são os alvos.
   useGSAP(
     () => {
       const mm = createCinematicTimeline(
         {
           stage: stageRef.current!,
           text: textRef.current!,
-          media: gridRef.current!,
+          media: galleryRef.current!,
           caption: titleRef.current!,
         },
         VIDEOS_CINEMATIC,
@@ -85,17 +74,7 @@ export function Videos() {
         <h2 ref={titleRef} id="videos-title" className={`type-title ${styles.title}`}>
           VIDEOS
         </h2>
-        <ul ref={gridRef} className={styles.grid}>
-          {VIDEOS.map((video) => (
-            <VideoCard key={video.title} video={video} />
-          ))}
-        </ul>
-      </div>
-      <div className="container-narrow">
-        <p className={`type-body ${styles.closing}`}>
-          Do show com banda completa, para quem busca uma experiência mais completa e marcante, ao
-          voz e violão, para eventos mais intimistas.
-        </p>
+        <VideoGallery ref={galleryRef} videos={VIDEOS} className={styles.gallery} />
       </div>
     </section>
   );

@@ -13,11 +13,11 @@ type NavLink = {
 const LINKS_START: NavLink[] = [
   { label: "HOME", href: "#home" },
   { label: "SOBRE NÓS", href: "#sobre-nos" },
-  { label: "AGENDA", href: "#agenda" },
+  { label: "VIDEOS/MÚSICAS", href: "#videos" },
 ];
 
 const LINKS_END: NavLink[] = [
-  { label: "VIDEOS", href: "#videos" },
+  { label: "AGENDA", href: "#agenda" },
   { label: "MODELOS", href: "#modelos" },
   { label: "CONTATO", href: "#contato" },
 ];

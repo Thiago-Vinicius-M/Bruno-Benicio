@@ -93,13 +93,15 @@ export function createCinematicTimeline(
     if (reduceMotion) return; // composição final estática (CSS)
 
     // y que leva o centro do texto ao centro da área visível durante o pin — no celular,
-    // ao centro da mídia (já reduzida), que ali é uma faixa baixa e não ocupa a tela.
+    // ao centro da mídia (já reduzida) quando ela é uma faixa baixa, mas nunca abaixo do
+    // centro da tela (mídia alta, ex.: galeria empilhada, jogaria o texto para fora).
     // Função: recalculada em cada refresh (resize), junto com invalidateOnRefresh.
     // offsetTop é relativo ao stage (position: relative).
     const centerY = () => {
+      const screenCenter = (window.innerHeight - getOffsetTop()) / 2;
       const target = isMobile
-        ? el.media.offsetTop + (el.media.offsetHeight * params.mediaScale) / 2
-        : (window.innerHeight - getOffsetTop()) / 2;
+        ? Math.min(el.media.offsetTop + (el.media.offsetHeight * params.mediaScale) / 2, screenCenter)
+        : screenCenter;
       return target - el.text.offsetTop - el.text.offsetHeight / 2;
     };
     // Escala do texto no centro, limitada para ele (ampliado) nunca passar de 94% da tela.

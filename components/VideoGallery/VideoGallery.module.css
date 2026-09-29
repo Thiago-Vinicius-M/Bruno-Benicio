@@ -1,0 +1,350 @@
+/*
+ * Galeria de vídeos — cada linha (.row) é um grid próprio, posicionado pelo template
+ * (data-template) e pela posição do card no template (data-slot).
+ *
+ *   Desktop (≥ 1024px)
+ *     pair    → [ 16:9 ][ 16:9 ]
+ *     feature → [ 9:16 ][ 16:9 / 16:9 empilhados ][ 9:16 ]   colunas 3fr · 4fr · 3fr
+ *               A altura sai dos verticais (9:16); os dois do meio dividem essa altura
+ *               e ficam por volta de 3:2.
+ *   Tablet (768–1023)
+ *     feature → [ 9:16 ][ 9:16 ] em cima, [ 16:9 ][ 16:9 ] embaixo
+ *   Celular (≤ 767px)
+ *     uma coluna, na ordem dos dados: H · H · V · H · H · V
+ *
+ * Verticais nunca passam de --gallery-portrait-max de altura fora do desktop (ficam
+ * mais estreitos e centralizados). Ajustes visuais rápidos ficam nas variáveis de .gallery.
+ */
+.gallery {
+  --gallery-gap: clamp(12px, 1.6vw, 24px);
+  --gallery-radius: 0px; /* cantos retos, como os demais vídeos do site */
+  --gallery-portrait-max: 78svh;
+  --gallery-surface: #0d0f12;
+  --gallery-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  display: grid;
+  row-gap: var(--gallery-gap);
+}
+
+.row {
+  display: grid;
+  gap: var(--gallery-gap);
+}
+
+.row[data-template="pair"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.row[data-template="feature"] {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 4fr) minmax(0, 3fr);
+  grid-template-areas:
+    "start top end"
+    "start bottom end";
+}
+
+.row[data-template="feature"] > [data-slot="0"] {
+  grid-area: start;
+}
+
+.row[data-template="feature"] > [data-slot="1"] {
+  grid-area: top;
+}
+
+.row[data-template="feature"] > [data-slot="2"] {
+  grid-area: bottom;
+}
+
+.row[data-template="feature"] > [data-slot="3"] {
+  grid-area: end;
+}
+
+/* Sobras que não completam um template: grade simples, cada card na sua proporção. */
+.row[data-template="rest"] {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  align-items: start;
+}
+
+/* ---------- Card ---------- */
+
+.item {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--gallery-radius);
+  background: var(--gallery-surface);
+}
+
+.item[data-orientation="landscape"] {
+  aspect-ratio: 16 / 9;
+}
+
+.item[data-orientation="portrait"] {
+  aspect-ratio: 9 / 16;
+}
+
+/* Desktop: os dois do meio não têm proporção própria — dividem a altura dos verticais. */
+.row[data-template="feature"] > [data-slot="1"],
+.row[data-template="feature"] > [data-slot="2"] {
+  aspect-ratio: auto;
+}
+
+.media {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.7s var(--gallery-ease);
+}
+
+.thumbnail {
+  object-fit: cover;
+}
+
+/* Vertical: a imagem aparece inteira (sem cortar rostos/legendas). */
+.item[data-orientation="portrait"] .thumbnail {
+  object-fit: contain;
+}
+
+.framePreview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Placeholder: mostra o formato do card e onde entra a thumbnail. */
+.placeholder {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgb(255 255 255 / 0.06), transparent 60%),
+    linear-gradient(160deg, #22262d, #13161a);
+}
+
+.placeholder::before {
+  content: "";
+  position: absolute;
+  inset: clamp(8px, 1vw, 14px);
+  border: 1px dashed rgb(255 255 255 / 0.18);
+  border-radius: calc(var(--gallery-radius) * 0.6);
+}
+
+.placeholderLabel,
+.placeholderHint {
+  position: absolute;
+  inset-block-start: clamp(16px, 1.8vw, 26px);
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  letter-spacing: var(--tracking-nav);
+  text-transform: uppercase;
+}
+
+.placeholderLabel {
+  inset-inline-start: clamp(16px, 1.8vw, 26px);
+  padding: 6px 10px;
+  border: 1px solid rgb(255 195 66 / 0.4);
+  border-radius: 999px;
+  color: var(--color-accent);
+}
+
+.placeholderHint {
+  inset-inline-end: clamp(16px, 1.8vw, 26px);
+  padding-block: 6px;
+  color: rgb(255 255 255 / 0.45);
+}
+
+/* Degradê de baixo para cima: contraste do título sobre qualquer thumbnail. */
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.78), rgb(0 0 0 / 0.1) 55%, transparent);
+  opacity: 0.85;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.info {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 1;
+  display: grid;
+  row-gap: 6px;
+  padding: clamp(14px, 1.6vw, 22px);
+  transform: translateY(4px);
+  transition: transform 0.45s var(--gallery-ease);
+  pointer-events: none;
+}
+
+.category {
+  font-size: 0.6875rem;
+  color: var(--color-accent);
+}
+
+.itemTitle {
+  color: var(--color-foreground);
+  text-shadow: 0 1px 12px rgb(0 0 0 / 0.6);
+  overflow-wrap: anywhere;
+}
+
+/* Botão de play: cobre o card inteiro; o círculo é só o indicador visual. */
+.play {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--gallery-radius);
+  background: transparent;
+  color: var(--color-foreground);
+  cursor: pointer;
+}
+
+.play[aria-disabled="true"] {
+  cursor: default;
+}
+
+.play:focus-visible {
+  outline: 2px solid var(--color-foreground);
+  outline-offset: -4px;
+}
+
+.playIcon {
+  display: grid;
+  place-items: center;
+  width: clamp(48px, 4.5vw, 64px);
+  aspect-ratio: 1;
+  border: 1px solid rgb(255 255 255 / 0.28);
+  border-radius: 50%;
+  background: rgb(24 27 32 / 0.7);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  transition:
+    transform 0.45s var(--gallery-ease),
+    background 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease;
+}
+
+.playIcon svg {
+  width: 42%;
+  margin-inline-start: 6%; /* compensa o triângulo, que "pesa" para a esquerda */
+  fill: currentColor;
+}
+
+.play[aria-disabled="true"] .playIcon {
+  opacity: 0.7;
+}
+
+/* Destaque: mouse em cima ou foco do teclado. */
+.item:hover .media,
+.item:focus-within .media {
+  transform: scale(1.03);
+}
+
+.item:hover .scrim,
+.item:focus-within .scrim {
+  opacity: 1;
+}
+
+.item:hover .info,
+.item:focus-within .info {
+  transform: none;
+}
+
+.item[data-playable="true"]:hover .playIcon,
+.item[data-playable="true"] .play:focus-visible .playIcon {
+  transform: scale(1.08);
+  border-color: var(--color-accent);
+  background: rgb(24 27 32 / 0.92);
+  color: var(--color-accent);
+}
+
+/* Player (depois do play: <video> ou iframe do YouTube): vídeo inteiro, sem cortes nem deformação. */
+.player {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  object-fit: contain;
+  background: #000;
+}
+
+.player:focus-visible {
+  outline: 2px solid var(--color-foreground);
+  outline-offset: -2px;
+}
+
+/* Verticais fora do desktop (e nas sobras): nunca mais altos que a tela. */
+.row[data-template="rest"] > [data-orientation="portrait"] {
+  justify-self: center;
+  width: min(100%, calc(var(--gallery-portrait-max) * 9 / 16));
+}
+
+/* Tablet: verticais lado a lado; horizontais lado a lado, cada um com sua proporção. */
+@media (max-width: 1023px) {
+  .row[data-template="feature"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "start end"
+      "top bottom";
+    align-items: center;
+  }
+
+  .row[data-template="feature"] > [data-slot="1"],
+  .row[data-template="feature"] > [data-slot="2"] {
+    aspect-ratio: 16 / 9;
+  }
+
+  .row[data-template="feature"] > [data-orientation="portrait"] {
+    justify-self: center;
+    width: min(100%, calc(var(--gallery-portrait-max) * 9 / 16));
+  }
+}
+
+/* Celular: uma coluna, na ordem dos dados. */
+@media (max-width: 767px) {
+  .gallery {
+    --gallery-portrait-max: 72svh;
+  }
+
+  .row[data-template="pair"],
+  .row[data-template="feature"] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: none;
+  }
+
+  .row[data-template="feature"] > [data-slot] {
+    grid-area: auto;
+  }
+}
+
+/* Sem mouse (toque): nada depende de hover — título já aparece na posição final. */
+@media (hover: none) {
+  .info {
+    transform: none;
+  }
+
+  .scrim {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media,
+  .scrim,
+  .info,
+  .playIcon {
+    transition: none;
+  }
+
+  .item:hover .media,
+  .item:focus-within .media {
+    transform: none;
+  }
+}

@@ -5,7 +5,7 @@ import type { CinematicTimelineParams } from "@/animations/cinematicTimeline";
  *
  * SEQUÊNCIA (a seção fica presa na tela enquanto ela acontece)
  *   1 · a frase "Agora queremos compartilhar..." surge no centro da tela
- *   2 · os quatro vídeos aparecem ATRÁS da frase (o recorte se abre)
+ *   2 · a galeria de vídeos aparece ATRÁS da frase (o recorte se abre)
  *   3 · os vídeos crescem até o tamanho final
  *   4 · a frase sobe para o lugar dela, acima dos vídeos
  *   5 · o título "VIDEOS" aparece
@@ -26,7 +26,7 @@ import type { CinematicTimelineParams } from "@/animations/cinematicTimeline";
  *   do aumento (1.3 → 1.15).
  *
  * mediaScale
- *   Tamanho dos vídeos quando aparecem (0.7 = 70%). Com 0.7 os quatro cabem na tela.
+ *   Tamanho da galeria quando aparece (0.7 = 70%). Menor → mais da galeria cabe na tela.
  *
  * mediaDim
  *   Brilho dos vídeos enquanto a frase está na frente deles (1 = normal · 0.4 = bem
