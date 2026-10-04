@@ -1,0 +1,91 @@
+/*
+ * Tela de loading: fundo do site com o logo centralizado.
+ * A entrada do logo é CSS (roda antes da hidratação); a saída é GSAP (animations/loaderExit.ts).
+ */
+.loader {
+  --loader-entrance: 0.9s; /* = LOADER.entranceMs (loaderConfig.ts) */
+
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: var(--color-background);
+  /* Rede de segurança sem JavaScript: a tela sai sozinha se o script nunca rodar. */
+  animation: loader-failsafe 0.4s ease 12s forwards;
+}
+
+/* Wrapper animado pelo GSAP na saída. */
+.mark {
+  position: relative;
+  width: min(56vw, 300px);
+}
+
+.logo {
+  width: 100%;
+  height: auto;
+  animation:
+    logo-in var(--loader-entrance) cubic-bezier(0.22, 1, 0.36, 1) both,
+    logo-breathe 1.6s ease-in-out var(--loader-entrance) infinite alternate;
+}
+
+/* Fio dourado (cor de destaque do site) que se abre sob o logo junto com a entrada. */
+.mark::after {
+  content: "";
+  position: absolute;
+  inset-inline: 30%;
+  top: calc(100% + clamp(12px, 3vw, 20px));
+  height: 2px;
+  border-radius: 1px;
+  background: var(--color-accent);
+  transform-origin: 50% 50%;
+  animation: line-in var(--loader-entrance) cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+/* O logo é revelado da esquerda para a direita, assentando de leve. */
+@keyframes logo-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    transform: none;
+  }
+}
+
+/* Enquanto a página termina de carregar, o logo "respira" — sem chamar atenção. */
+@keyframes logo-breathe {
+  to {
+    opacity: 0.7;
+  }
+}
+
+@keyframes line-in {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes loader-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo,
+  .mark::after {
+    animation: none;
+  }
+
+  .mark::after {
+    opacity: 0.8;
+  }
+}

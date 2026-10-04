@@ -25,6 +25,11 @@ export type FadeSlideStepParams = {
   scale?: number;
   /** desfoque inicial em px (0 = sem blur). Use só em textos/elementos leves. */
   blur?: number;
+  /**
+   * recorte inicial (clip-path inset, em %) que abre até mostrar o elemento inteiro —
+   * ex.: "100% 0% 0% 0%" revela de baixo para cima. Não é afetado por `intensity`.
+   */
+  clip?: string;
   /** intervalo entre o início de cada alvo do grupo, em segundos */
   stagger?: number;
   /** duração de cada alvo; sem valor usa a duração padrão */
@@ -46,6 +51,8 @@ export type FadeSlideParams = {
   start: string;
   toggleActions: string;
   markers: boolean;
+  /** false = sem animação no celular (≤ 767px): os elementos já aparecem prontos (padrão true) */
+  mobile?: boolean;
 };
 
 export function createFadeSlide(trigger: HTMLElement, steps: FadeSlideStep[], params: FadeSlideParams) {
@@ -53,9 +60,7 @@ export function createFadeSlide(trigger: HTMLElement, steps: FadeSlideStep[], pa
 
   mm.add(MEDIA, (context) => {
     const { isMobile, reduceMotion } = context.conditions as MediaConditions;
-    if (reduceMotion) return; // composição final estática (CSS)
-
-    const k = params.intensity * (isMobile ? params.mobileFactor : 1);
+    if (reduceMotion || (isMobile && params.mobile === false)) return; // composição final estática (CSS)
 
     const tl = gsap.timeline({
       defaults: { ease: params.ease, duration: params.duration },
@@ -68,31 +73,48 @@ export function createFadeSlide(trigger: HTMLElement, steps: FadeSlideStep[], pa
       },
     });
 
-    for (const step of steps) {
-      if (!step.targets.length) continue;
-
-      const from: gsap.TweenVars = { autoAlpha: 0, y: step.y * k };
-      const to: gsap.TweenVars = { autoAlpha: 1, y: 0 };
-
-      const scale = 1 - (1 - (step.scale ?? 1)) * k;
-      if (scale !== 1) {
-        from.scale = scale;
-        to.scale = 1;
-      }
-
-      const blur = (step.blur ?? 0) * k;
-      if (blur > 0) {
-        from.filter = `blur(${blur}px)`;
-        to.filter = "blur(0px)";
-        to.clearProps = "filter"; // não deixa um filter inútil no elemento depois do efeito
-      }
-
-      if (step.stagger !== undefined) to.stagger = step.stagger;
-      if (step.duration !== undefined) to.duration = step.duration;
-
-      tl.fromTo(step.targets, from, to, step.position);
-    }
+    addFadeSlideSteps(tl, steps, params.intensity * (isMobile ? params.mobileFactor : 1));
   });
 
   return mm;
+}
+
+/**
+ * Adiciona os passos à timeline (um fromTo com stagger por passo). Compartilhado com
+ * introReveal, que toca a mesma sequência sem ScrollTrigger.
+ * @param k multiplicador de y, blur e escala (intensity × fator do celular)
+ */
+export function addFadeSlideSteps(tl: gsap.core.Timeline, steps: FadeSlideStep[], k: number) {
+  for (const step of steps) {
+    if (!step.targets.length) continue;
+
+    const from: gsap.TweenVars = { autoAlpha: 0, y: step.y * k };
+    const to: gsap.TweenVars = { autoAlpha: 1, y: 0 };
+    const clear: string[] = [];
+
+    const scale = 1 - (1 - (step.scale ?? 1)) * k;
+    if (scale !== 1) {
+      from.scale = scale;
+      to.scale = 1;
+    }
+
+    const blur = (step.blur ?? 0) * k;
+    if (blur > 0) {
+      from.filter = `blur(${blur}px)`;
+      to.filter = "blur(0px)";
+      clear.push("filter"); // não deixa um filter inútil no elemento depois do efeito
+    }
+
+    if (step.clip) {
+      from.clipPath = `inset(${step.clip})`;
+      to.clipPath = "inset(0% 0% 0% 0%)";
+      clear.push("clipPath");
+    }
+
+    if (clear.length) to.clearProps = clear.join(",");
+    if (step.stagger !== undefined) to.stagger = step.stagger;
+    if (step.duration !== undefined) to.duration = step.duration;
+
+    tl.fromTo(step.targets, from, to, step.position);
+  }
 }

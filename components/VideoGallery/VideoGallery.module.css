@@ -11,6 +11,7 @@
  *     feature → [ 9:16 ][ 9:16 ] em cima, [ 16:9 ][ 16:9 ] embaixo
  *   Celular (≤ 767px)
  *     uma coluna, na ordem dos dados: H · H · V · H · H · V
+ *     com `highlights`: só os destaques, na ordem deles (ex.: V · H · H)
  *
  * Verticais nunca passam de --gallery-portrait-max de altura fora do desktop (ficam
  * mais estreitos e centralizados). Ajustes visuais rápidos ficam nas variáveis de .gallery.
@@ -286,6 +287,13 @@
   width: min(100%, calc(var(--gallery-portrait-max) * 9 / 16));
 }
 
+/* Tablet/desktop com completeRowsOnly: sem a linha de sobras (fica na galeria completa). */
+@media (min-width: 768px) {
+  .gallery[data-complete-rows] > .row[data-template="rest"] {
+    display: none;
+  }
+}
+
 /* Tablet: verticais lado a lado; horizontais lado a lado, cada um com sua proporção. */
 @media (max-width: 1023px) {
   .row[data-template="feature"] {
@@ -321,6 +329,23 @@
 
   .row[data-template="feature"] > [data-slot] {
     grid-area: auto;
+  }
+
+  /*
+   * Com destaques (prop highlights): só eles aparecem, na ordem pedida. As linhas deixam de
+   * gerar caixa (display: contents) para os cards de linhas diferentes se ordenarem entre si
+   * dentro do grid da galeria — que já é uma coluna, com o mesmo espaçamento.
+   */
+  .gallery[data-highlights] > .row {
+    display: contents;
+  }
+
+  .gallery[data-highlights] .item {
+    order: var(--highlight-order);
+  }
+
+  .gallery[data-highlights] .item:not([data-highlight]) {
+    display: none;
   }
 }
 

@@ -120,4 +120,14 @@ describe("Music — animação", () => {
       expect(el.style.visibility).toBe("");
     }
   });
+
+  it("no celular não há animação de entrada: o conteúdo já aparece pronto", () => {
+    window.__matchingQueries = new Set(["(max-width: 767px)"]);
+    render(<Music />);
+
+    expect(ScrollTrigger.getAll()).toHaveLength(0);
+    for (const el of document.querySelectorAll<HTMLElement>("[data-reveal]")) {
+      expect(el.style.visibility).toBe("");
+    }
+  });
 });

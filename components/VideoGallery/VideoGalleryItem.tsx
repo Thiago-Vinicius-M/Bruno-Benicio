@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import Image from "next/image";
 import type { GalleryVideo } from "./types";
 import { canPlay, resolveThumbnail, VideoPlayer } from "./videoSources";
@@ -9,6 +10,8 @@ type VideoGalleryItemProps = {
   video: GalleryVideo;
   /** posição no template da linha (o CSS usa para a área do grid) */
   slot: number;
+  /** posição entre os destaques do celular (prop highlights da galeria); -1/sem valor = não é destaque */
+  highlight?: number;
   playing: boolean;
   onPlay: () => void;
   onStop: () => void;
@@ -27,10 +30,11 @@ const ORIENTATION_LABEL = {
  *   play    → botão que cobre o card inteiro (clique em qualquer ponto, foco via teclado)
  * Tocando, as camadas dão lugar ao player da fonte do vídeo.
  */
-export function VideoGalleryItem({ video, slot, playing, onPlay, onStop }: VideoGalleryItemProps) {
+export function VideoGalleryItem({ video, slot, highlight = -1, playing, onPlay, onStop }: VideoGalleryItemProps) {
   const playable = canPlay(video);
   const thumbnail = resolveThumbnail(video);
   const poster = typeof thumbnail === "string" ? thumbnail : thumbnail?.src;
+  const highlighted = highlight >= 0;
 
   return (
     <li
@@ -38,6 +42,9 @@ export function VideoGalleryItem({ video, slot, playing, onPlay, onStop }: Video
       data-slot={slot}
       data-orientation={video.orientation}
       data-playable={playable}
+      data-highlight={highlighted ? highlight : undefined}
+      // ordem entre os destaques — só usada no celular (VideoGallery.module.css)
+      style={highlighted ? ({ "--highlight-order": highlight } as CSSProperties) : undefined}
       data-reveal="video"
     >
       {playing && playable ? (

@@ -2,73 +2,132 @@
   padding-block-start: var(--space-lg);
 }
 
-.rows {
+.carousel {
   display: grid;
-  row-gap: var(--space-md);
+  row-gap: var(--space-sm);
   margin-block-start: var(--space-lg);
 }
 
-.row {
+/*
+ * Área arrastável: foto ao lado da descrição (desktop/tablet), empilhadas no celular.
+ * touch-action: pan-y → o dedo na vertical continua rolando a página; na horizontal,
+ * o gesto fica para o carrossel.
+ */
+.slider {
   --media-size: clamp(240px, 30vw, 384px);
 
   display: grid;
   grid-template-columns: var(--media-size) minmax(0, 1fr);
-  align-items: end;
-  column-gap: clamp(16px, 2vw, 28px);
-}
-
-.row[data-align="center"] {
   align-items: center;
+  column-gap: clamp(16px, 2vw, 28px);
+  touch-action: pan-y;
+  user-select: none;
+  cursor: grab;
 }
 
-.row[data-media="end"] {
-  grid-template-columns: minmax(0, 1fr) var(--media-size);
+.slider:active {
+  cursor: grabbing;
 }
 
-.row[data-media="end"] .media {
-  grid-column: 2;
-  grid-row: 1;
+/*
+ * Fotos e descrições: cada grupo empilha os 3 slides na mesma célula (a altura é a do
+ * maior, nada pula na troca). Só o ativo aparece; a animação de troca
+ * (animations/panelSwap.ts) sobrepõe isso enquanto acontece. overflow-x: clip recorta
+ * o que desliza para fora, sem gerar rolagem lateral.
+ */
+.photos,
+.texts {
+  display: grid;
+  overflow-x: clip;
 }
 
-.row[data-media="end"] .text {
-  grid-column: 1;
-  grid-row: 1;
-  justify-self: end;
+.photo,
+.slide {
+  grid-area: 1 / 1;
 }
 
-.media {
+.photo:not([data-active]),
+.slide:not([data-active]) {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.photo {
   width: 100%;
   height: auto;
   /* Garante a mesma proporção nas 3 fotos, mesmo que alguma seja trocada. */
   aspect-ratio: 1 / 1;
   object-fit: cover;
+  -webkit-user-drag: none;
 }
 
-/*
- * Celular: foto e texto empilhados, a foto mantém o lado (início/fim) do desktop.
- * Os seletores repetem [data-media="end"] para vencer a especificidade das regras acima.
- */
+.slide {
+  display: grid;
+  align-content: center;
+  row-gap: var(--space-3xs);
+}
+
+.name {
+  color: var(--color-accent);
+}
+
+/* Indicador ● ○ ○: área de toque de 44px, bolinha de 10px. */
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.dot {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dot::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--color-foreground-muted);
+  border-radius: 50%;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    transform 0.3s ease;
+}
+
+.dot[aria-current]::before {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  transform: scale(1.15);
+}
+
+.dot:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -6px;
+  border-radius: 50%;
+}
+
+/* Celular: foto em cima, descrição embaixo. */
 @media (max-width: 767px) {
-  .row,
-  .row[data-media="end"] {
+  .slider {
     grid-template-columns: minmax(0, 1fr);
     row-gap: 20px; /* folga para o parallax: foto e texto se aproximam até ~14px */
   }
 
-  .row .media,
-  .row[data-media="end"] .media {
-    grid-column: 1;
-    grid-row: 1;
+  .photos {
     width: min(100%, 320px);
   }
+}
 
-  .row[data-media="end"] .media {
-    justify-self: end;
-  }
-
-  .row .text,
-  .row[data-media="end"] .text {
-    grid-column: 1;
-    grid-row: 2;
+@media (prefers-reduced-motion: reduce) {
+  .dot::before {
+    transition: none;
   }
 }

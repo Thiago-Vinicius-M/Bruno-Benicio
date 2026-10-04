@@ -3,38 +3,16 @@
 import Image from "next/image";
 import styles from "./Header.module.css";
 import logoTopbar from "@/Imagens/BeB LOGO FUNDO PRETO_page-0001.png";
+import { MobileMenu } from "./MobileMenu";
+import { currentFor, LINKS_END, LINKS_START, NAV_LINKS, SECTION_IDS, type NavLink } from "./navLinks";
 import { useActiveSection } from "./useActiveSection";
 
-type NavLink = {
-  label: string;
-  href: string;
-};
-
-const LINKS_START: NavLink[] = [
-  { label: "HOME", href: "#home" },
-  { label: "SOBRE NÓS", href: "#sobre-nos" },
-  { label: "VIDEOS/MÚSICAS", href: "#videos" },
-];
-
-const LINKS_END: NavLink[] = [
-  { label: "AGENDA", href: "#agenda" },
-  { label: "MODELOS", href: "#modelos" },
-  { label: "CONTATO", href: "#contato" },
-];
-
-/** Ids das seções, na ordem da página (fora do componente: referência estável para o hook). */
-const SECTION_IDS = [...LINKS_START, ...LINKS_END].map((link) => link.href.slice(1));
-
-function NavList({ links, className, active }: { links: NavLink[]; className: string; active: string }) {
+function NavList({ links, active, className }: { links: NavLink[]; active: string; className?: string }) {
   return (
-    <ul className={`${styles.list} ${className}`}>
+    <ul className={className ? `${styles.list} ${className}` : styles.list}>
       {links.map((link) => (
         <li key={link.href}>
-          <a
-            href={link.href}
-            className="type-nav"
-            aria-current={link.href === `#${active}` ? "location" : undefined}
-          >
+          <a href={link.href} className="type-nav" aria-current={currentFor(link, active)}>
             {link.label}
           </a>
         </li>
@@ -43,13 +21,14 @@ function NavList({ links, className, active }: { links: NavLink[]; className: st
   );
 }
 
+/** Topbar no tablet/desktop; no celular (≤ 767px) ela some e entra o menu lateral (MobileMenu). */
 export function Header() {
   const active = useActiveSection(SECTION_IDS);
 
   return (
-    <header className={styles.header}>
+    <header className={styles.header} data-experience-home>
       <nav className={styles.nav} aria-label="Principal">
-        <NavList links={LINKS_START} className={styles.listStart} active={active} />
+        <NavList links={LINKS_START} active={active} />
         <Image
           src={logoTopbar}
           width={120}
@@ -57,8 +36,9 @@ export function Header() {
           alt="Bruno & Benício"
           className={styles.logo}
         />
-        <NavList links={LINKS_END} className={styles.listEnd} active={active} />
+        <NavList links={LINKS_END} active={active} className={styles.listEnd} />
       </nav>
+      <MobileMenu links={NAV_LINKS} active={active} />
     </header>
   );
 }

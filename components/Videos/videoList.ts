@@ -27,11 +27,19 @@ import type { GalleryVideo } from "@/components/VideoGallery/types";
 export const VIDEOS: GalleryVideo[] = [
   horizontal({ id: "horizontal-01", title: "Foi Deus (AO VIVO)", youtube: "https://www.youtube.com/watch?v=TDqHMUM0Z4k" }),
   horizontal({ id: "horizontal-02", title: "SÓ PRO MEU PRAZER (AO VIVO)", youtube: "https://www.youtube.com/watch?v=wIpRwHLWECw" }),
-  vertical({ id: "palavrasAoVento", title: "Palavras Ao Vento", file: "Palavras Ao Vento.mp4", poster:"Palavras Ao Vento Thumb.jpg" }),
+  vertical({ id: "conhecaNossoShow", title: "Conheça nosso show", file: "BeB-conheça-nosso-show.mp4", poster: "BeB-conheça-nosso-showThumb.jpg" }),
   horizontal({ id: "horizontal-03", title: "POT-POURRI MANEIRA ERRADA / QUEM DE NOS DOIS", youtube: "https://www.youtube.com/watch?v=b-5AnnoJeg4" }),
   horizontal({ id: "horizontal-04", title: "AMIGO", youtube: "https://www.youtube.com/watch?v=pbfAmBaOKCk" }),
   vertical({ id: "soDaVoceNaMinhaVida", title: "Só da você na minha vida", file: "So Da Você Na Minha Vida.mp4", poster: "So Da Você Na Minha Vida Thumb.jpg" }),
+  vertical({ id: "elaEDemais", title: "Ela é demais", file: "Ela e demais.mp4", poster: "Ela e demaisTHUMB.jpg" }),
 ];
+
+/**
+ * DESTAQUES DO CELULAR — em telas ≤ 767px a seção VIDEOS da Home mostra só estes, nesta
+ * ordem: 1 vertical + 2 horizontais (ids da lista acima). Todos os vídeos continuam na
+ * galeria completa, aberta pelo "Ver mais". Tablet e desktop mostram a lista inteira.
+ */
+export const VIDEO_HIGHLIGHTS = ["conhecaNossoShow", "horizontal-01", "horizontal-02"] as const;
 
 type Common = {
   id: string;

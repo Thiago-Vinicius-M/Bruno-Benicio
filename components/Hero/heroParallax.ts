@@ -14,8 +14,10 @@ import type { ParallaxLayer, ParallaxParams } from "@/animations/parallax";
  *   Em 1920px de largura: logo ≈ 416px de altura (1% ≈ 4px) · foto ≈ 640px (1% ≈ 6px).
  *   Aumentar → mais deslocamento e mais diferença de velocidade. Diminuir → mais discreto.
  *   Testar no logo: 10 sutil · 20 médio · 35 forte.  Na foto: 5 sutil · 10 médio · 18 forte.
- *   A foto sobe e se afasta do título logo abaixo dela: ≈ 5px por ponto de intensity enquanto
- *   o título está na tela (10 → ~50px). Acima de ~20 esse espaço fica grande demais.
+ *   Logo descendo + foto subindo = as cabeças cobrem mais o logo conforme a página rola.
+ *   A foto sobe em relação ao título (que fica sobre a base dela); a base some num degradê,
+ *   então a borda não aparece. Acima de ~20 a foto se afasta demais do título.
+ *   (A POSIÇÃO de repouso da foto não fica aqui: --photo-x/-y/-scale em Hero.module.css.)
  *
  * direction
  *   Trocar para a mesma direção nas duas camadas reduz muito a profundidade (as duas

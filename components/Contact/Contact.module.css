@@ -1,10 +1,74 @@
+/*
+ * Seção CONTATO — "Contrate agora!", telefones (WhatsApp) e Instagram, centralizados.
+ * Mesmos tokens do site: título editorial em --color-accent, números na fonte de display.
+ */
 .contact {
   padding-block: var(--space-3xl) var(--space-4xl);
 }
 
-/* Uma linha em branco entre cada contato. */
-.list {
+.stage {
   display: grid;
-  row-gap: calc(var(--text-body) * var(--leading-body));
-  margin-block-start: var(--space-2xs);
+  justify-items: center;
+  row-gap: var(--space-2xs);
+  text-align: center;
+}
+
+.title {
+  color: var(--color-accent);
+}
+
+.phones {
+  display: grid;
+  row-gap: 4px;
+}
+
+.phone {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: var(--text-marquee);
+  font-weight: var(--weight-bold);
+  line-height: 1.05;
+  letter-spacing: var(--tracking-display);
+  color: var(--color-foreground);
+  transition: color 0.25s ease;
+}
+
+.instagram {
+  color: var(--color-foreground-muted);
+  transition: color 0.25s ease;
+}
+
+.phone:focus-visible,
+.instagram:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+}
+
+@media (hover: hover) {
+  .phone:hover,
+  .instagram:hover {
+    color: var(--color-accent);
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .phone {
+    font-size: clamp(2rem, 9vw, 2.75rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phone,
+  .instagram {
+    transition: none;
+  }
 }

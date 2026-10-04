@@ -1,25 +1,3 @@
 .models {
   padding-block-start: var(--space-2xl);
 }
-
-.title {
-  margin-block-start: var(--space-lg);
-}
-
-.list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: clamp(24px, 8.5vw, 136px);
-  margin-block-start: var(--space-xs);
-}
-
-.frame {
-  aspect-ratio: 742 / 463;
-  border: clamp(3px, 0.3vw, 5px) solid var(--color-border);
-  border-radius: clamp(16px, 2.4vw, 38px);
-}
-
-.caption {
-  margin-block-start: var(--space-3xs);
-  text-align: center;
-}

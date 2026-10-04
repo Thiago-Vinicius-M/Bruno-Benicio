@@ -1,0 +1,125 @@
+/*
+ * Subtela (ExperienceLayer): camada fixa que cobre a tela, com rolagem própria. Não tem
+ * fundo — a atmosfera do layout (fixa) continua atrás, então a subtela parece outra parte
+ * do mesmo palco. A Home sai de cena (some) durante a transição (animations/screenTransition.ts).
+ */
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 200; /* acima do header (100) e do menu do celular (até 102) */
+  outline: none;
+}
+
+.scroller {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Botão voltar fixo no topo enquanto o conteúdo rola. */
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  padding: 12px var(--page-gutter);
+  pointer-events: none; /* só o botão recebe toque: a faixa não bloqueia o conteúdo */
+}
+
+.body {
+  display: grid;
+  row-gap: var(--space-lg);
+  padding-block: var(--space-2xs) var(--space-2xl);
+}
+
+/* Mesmo vidro escuro do botão de menu do celular. */
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 20px;
+  font-family: var(--font-body);
+  font-size: var(--text-nav);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-nav);
+  text-transform: uppercase;
+  color: var(--color-foreground);
+  background: rgb(24 26 32 / 0.6);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 999px;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color 0.25s ease,
+    color 0.25s ease;
+}
+
+.backEnd {
+  justify-self: center;
+}
+
+.back:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .back:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+}
+
+/* ---------- Botão "Ver mais" (MoreButton) ---------- */
+
+.more {
+  display: inline-flex;
+  align-items: center;
+  justify-self: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 28px;
+  font-family: var(--font-body);
+  font-size: var(--text-nav);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-nav);
+  text-transform: uppercase;
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+.more:focus-visible {
+  outline: 2px solid var(--color-foreground);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .more:hover {
+    background: var(--color-accent);
+    color: var(--color-background);
+  }
+}
+
+/* Só no celular: em telas maiores o conteúdo completo já está na Home. */
+@media (min-width: 768px) {
+  .more[data-only="mobile"] {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .back,
+  .more {
+    transition: none;
+  }
+}

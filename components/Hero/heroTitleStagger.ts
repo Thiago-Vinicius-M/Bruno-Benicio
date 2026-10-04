@@ -40,7 +40,10 @@ import type { TextStaggerParams } from "@/animations/textStagger";
  * start
  *   Quando dispara ("<ponto do título> <ponto da tela>"). "top 75%" = quando o topo do
  *   título chega a 75% da altura da tela. "top bottom" → assim que aparece · "top center"
- *   → mais tarde. Se o título já estiver visível ao abrir a página, toca na hora.
+ *   → mais tarde. O título fica sobre a base da foto, perto do fim da primeira dobra:
+ *   "top 98%" faz ele entrar junto com a abertura da página sempre que já estiver na tela
+ *   (75% deixaria ele esperando o scroll). O stagger só é criado quando a entrada do Hero
+ *   chega no título (heroIntro.ts → titlePosition); se ele já estiver visível, toca na hora.
  *
  * toggleActions
  *   "onEnter onLeave onEnterBack onLeaveBack". "play none none reverse" = toca ao entrar e
@@ -58,7 +61,7 @@ export const HERO_TITLE_STAGGER: TextStaggerParams = {
   rotation: 8,
   duration: 0.8,
   ease: "power3.out",
-  start: "top 75%",
+  start: "top 98%",
   toggleActions: "play none none reverse",
   markers: false,
 };

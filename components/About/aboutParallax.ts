@@ -2,7 +2,7 @@ import type { ParallaxLayer, ParallaxParams } from "@/animations/parallax";
 
 /**
  * Parallax do Sobre Nós — todos os valores ajustáveis do efeito ficam aqui.
- * Vale para cada linha (foto + texto); cada linha é o próprio trigger.
+ * Vale para o carrossel (foto + descrição); a área do carrossel é o trigger.
  *
  * CAMADAS
  *   text  = frente → "up":   sobe mais rápido que a página

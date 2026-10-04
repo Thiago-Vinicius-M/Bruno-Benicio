@@ -20,6 +20,7 @@ export type MusicRevealConfig = FadeSlideParams & {
  *   intensity    → multiplica y, blur e escala de todos os passos.
  *                  0 = só fade · 0.5 = discreto · 1 = padrão · 1.5 = marcado.
  *   mobileFactor → multiplicador extra no celular (≤ 767px). 0.6 = 60% do movimento.
+ *                  (Sem efeito enquanto `mobile` for false.)
  *
  * POR PASSO
  *   y         → quantos px o elemento sobe ao aparecer
@@ -38,6 +39,7 @@ export type MusicRevealConfig = FadeSlideParams & {
  *   toggleActions → "play none none none" toca uma vez · "play none none reverse" desfaz
  *                   ao rolar de volta para cima.
  *   markers       → true desenha a linha de start para depuração. Manter false em produção.
+ *   mobile        → false = sem animação no celular (≤ 767px): a seção já aparece pronta.
  */
 export const MUSIC_REVEAL: MusicRevealConfig = {
   duration: 0.9,
@@ -47,6 +49,7 @@ export const MUSIC_REVEAL: MusicRevealConfig = {
   start: "top 70%",
   toggleActions: "play none none none",
   markers: false,
+  mobile: false,
 
   heading: { y: 28, blur: 6, stagger: 0.12 },
   decor: { y: 0, scale: 0.8, duration: 1.8, position: "-=0.5" },

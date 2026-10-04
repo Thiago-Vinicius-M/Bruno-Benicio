@@ -64,10 +64,13 @@
   --space-4xl: clamp(96px, 12.5vw, 200px);
 }
 
-/* Celular: topbar mais baixa (logo e links menores). */
+/*
+ * Celular: sem topbar (só o botão do menu lateral, que flutua sobre a página) — nada fixo
+ * cobre o topo da tela. Usado pelo scroll-padding das âncoras e pelo pin dos Vídeos.
+ */
 @media (max-width: 767px) {
   :root {
-    --header-height: 60px;
+    --header-height: 0px;
   }
 }
 
@@ -153,7 +156,7 @@ a {
   letter-spacing: var(--tracking-nav);
 }
 
-/* Títulos de seção: SOBRE NÓS, VIDEOS, MODELOS, CONTATO. */
+/* Títulos de seção: SOBRE NÓS, VIDEOS, CONTATO. */
 .type-title {
   font-family: var(--font-display);
   font-size: var(--text-title);
@@ -194,7 +197,7 @@ a {
   letter-spacing: var(--tracking-body);
 }
 
-/* Títulos dos cards (Modelos). */
+/* Títulos de itens (faixas de música, vídeos da galeria). */
 .type-caption {
   font-family: var(--font-display);
   font-size: var(--text-caption);

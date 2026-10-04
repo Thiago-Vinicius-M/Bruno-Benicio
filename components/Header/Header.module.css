@@ -47,6 +47,14 @@
 }
 
 /*
+ * O grupo da direita tem menos links (2 × 3): com space-between eles iriam para as pontas,
+ * com um vão grande no meio. space-evenly mantém o ritmo próximo ao do grupo da esquerda.
+ */
+.listEnd {
+  justify-content: space-evenly;
+}
+
+/*
  * letter-spacing também entra DEPOIS da última letra: a margem negativa tira essa sobra,
  * para a caixa do link terminar onde o texto termina (distâncias ao logo e às bordas exatas).
  */
@@ -73,7 +81,7 @@
   }
 }
 
-/* Tablet e celular: mesma composição lateral, com fonte, espaçamentos e logo menores. */
+/* Tablet: mesma composição lateral, com fonte, espaçamentos e logo menores. */
 @media (max-width: 1023px) {
   .nav {
     --nav-gap: clamp(8px, 2.6vw, 24px);
@@ -89,19 +97,173 @@
   }
 }
 
+/*
+ * Menu do celular (MobileMenu.tsx): botão, overlay e gaveta. Fora do celular não existem
+ * na página (display: none). Abertura/fechamento animados pelo GSAP (animations/drawer.ts);
+ * aqui fica só o estado inicial FECHADO (visibility: hidden), que vale antes da hidratação.
+ */
+.menuButton,
+.overlay,
+.drawer {
+  display: none;
+}
+
+/*
+ * Celular: a topbar sai e fica só o botão de menu flutuando sobre a página. O header vira
+ * uma faixa transparente que rola junto com a página: no topo o botão fica nela, sem
+ * cobrir o logo do Hero; ao rolar, só o botão (fixo) continua na tela.
+ */
 @media (max-width: 767px) {
+  .header {
+    position: static;
+    height: 72px; /* botão (48px) + 12px acima e abaixo */
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
   .nav {
-    --nav-gap: 8px;
-    --nav-tracking: 0.03em;
-
-    padding-inline: 10px;
+    display: none;
   }
 
-  .list {
-    column-gap: 6px;
+  /* Mesmo vidro escuro da topbar, para o botão ficar legível sobre qualquer seção. */
+  .menuButton {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 102;
+    display: inline-grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    color: var(--color-foreground);
+    background: rgb(24 26 32 / 0.6);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgb(255 255 255 / 0.12);
+    border-radius: 50%;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .logo {
-    width: 56px;
+  /* Três linhas que viram um X quando o menu está aberto. */
+  .menuIcon,
+  .menuIcon::before,
+  .menuIcon::after {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: currentColor;
+    border-radius: 1px;
+    transition:
+      transform 0.25s ease,
+      background-color 0.25s ease;
+  }
+
+  .menuIcon {
+    position: relative;
+  }
+
+  .menuIcon::before,
+  .menuIcon::after {
+    content: "";
+    position: absolute;
+    left: 0;
+  }
+
+  .menuIcon::before {
+    top: -6px;
+  }
+
+  .menuIcon::after {
+    top: 6px;
+  }
+
+  .menuIcon[data-open] {
+    background: transparent;
+  }
+
+  .menuIcon[data-open]::before {
+    transform: translateY(6px) rotate(45deg);
+  }
+
+  .menuIcon[data-open]::after {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: block;
+    visibility: hidden;
+    background: rgb(0 0 0 / 0.55);
+  }
+
+  .drawer {
+    position: fixed;
+    inset-block: 0;
+    left: 0;
+    z-index: 101;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 32px;
+    width: min(300px, 82vw);
+    padding: 88px 28px max(28px, env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    visibility: hidden;
+    background: var(--color-header-background);
+    border-inline-end: 1px solid rgb(255 255 255 / 0.08);
+  }
+
+  .drawerList {
+    display: grid;
+    gap: 4px;
+  }
+
+  .drawerLink {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    font-family: var(--font-display);
+    font-size: 1.625rem;
+    font-weight: var(--weight-semibold);
+    line-height: 1;
+    letter-spacing: var(--tracking-display);
+    color: var(--color-foreground-muted);
+    transition: color 0.25s ease;
+  }
+
+  .drawerLink[aria-current] {
+    color: var(--color-accent);
+  }
+
+  .drawerLogo {
+    width: 96px;
+    height: auto;
+    opacity: 0.85;
+  }
+
+  .menuButton:focus-visible,
+  .drawerLink:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+}
+
+@media (max-width: 767px) and (hover: hover) {
+  .drawerLink:hover {
+    color: var(--color-foreground);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menuIcon,
+  .menuIcon::before,
+  .menuIcon::after {
+    transition: none;
   }
 }

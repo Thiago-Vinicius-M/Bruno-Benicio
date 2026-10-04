@@ -1,14 +1,75 @@
 /*
- * Toda a composição deriva de --hero-w (largura do logo de fundo), com as proporções do
- * Figma (logo 1820px · foto 1402px · foto 141px abaixo do topo · logo 26px acima do topo).
- * O limite em vh evita que, em telas baixas (ex.: 1366×768), a foto passe muito da dobra.
+ * Composição (de trás para frente):
+ *   atmosfera (fundo + luzes, montada no layout) → logo → foto da dupla → título
+ *
+ * Tudo deriva de --hero-w (largura do logo de fundo). O limite em vh evita que, em telas
+ * baixas (ex.: 1366×768), a composição passe muito da dobra.
+ *
+ * A foto (Imagens/OsDoisHero.png) tem fundo transparente e a dupla é cortada na base e na
+ * borda direita. Ela fica ancorada na BASE do Hero e sobe por cima do logo — as cabeças
+ * cobrem só a parte de baixo dele. O título fica na frente, sobre a base da foto. Base e
+ * borda direita somem num degradê (os cortes não aparecem).
+ *
+ * TROCOU A FOTO? Atualize as 3 medidas da imagem em "MEDIDAS DA FOTO" logo abaixo.
  */
 .hero {
   --hero-w: min(100% - 2 * var(--page-gutter), 1040px, 120vh);
 
+  /*
+   * ============ FOTO DA DUPLA — AJUSTE MANUAL (desktop e tablet) ============
+   *
+   *   --photo-x      horizontal. Positivo → direita · negativo → esquerda.
+   *                  % da largura da própria foto (ou px). Ex.: 3% · -24px
+   *   --photo-y      vertical. Positivo → desce · negativo → sobe (cobre mais o logo).
+   *                  % da altura da própria foto (ou px). Ex.: -4% · 20px
+   *   --photo-scale  tamanho. 1 = padrão · 1.1 = 10% maior · 0.9 = 10% menor.
+   *                  Cresce a partir da base (a base continua no mesmo lugar).
+   *
+   * Celular: valores próprios no bloco @media (max-width: 767px) logo abaixo.
+   * Não alteram o layout (o Hero não muda de altura) nem disputam com o GSAP: são as
+   * propriedades CSS `translate` e `scale`, separadas do `transform` que o parallax e a
+   * entrada animam.
+   */
+  --photo-x: 0%;
+  --photo-y: 0%;
+  --photo-scale: 1;
+
+  /*
+   * MEDIDAS DA FOTO (dependem da imagem — atualizar se ela for trocada)
+   *   --photo-ratio      altura ÷ largura do arquivo (2400×1350 → 0.5625)
+   *   --photo-heads-at   onde começam as cabeças, em fração da altura (topo do boné ≈ 0.09)
+   *   --photo-center-x   desloca a foto para a dupla ficar centralizada (a dupla está à
+   *                      direita no arquivo: centro dela ≈ 60% da largura → -10%)
+   */
+  --photo-ratio: 0.5625;
+  --photo-heads-at: 0.09;
+  --photo-center-x: -10%;
+
+  /* Largura base da foto e altura (relativa ao logo) onde começam as cabeças. */
+  --photo-width: calc(var(--hero-w) * 0.95);
+  --photo-heads: calc(var(--hero-w) * 0.3); /* logo vai de ~0 a 0.4 × --hero-w */
+  /* Degradê da base da foto: opaca até --photo-fade-start, some em --photo-fade-end. */
+  --photo-fade-start: 62%;
+  --photo-fade-end: 96%;
+
   position: relative;
+  display: grid;
   overflow: hidden;
-  padding-block: calc(var(--hero-w) * 0.0775) var(--space-lg);
+}
+
+/* ============ FOTO DA DUPLA — AJUSTE MANUAL (celular ≤ 767px) ============ */
+@media (max-width: 767px) {
+  .hero {
+    --photo-x: 0%;
+    --photo-y: 0%;
+    --photo-scale: 1;
+
+    /* Logo menor no celular: a foto passa da largura da tela (as sobras são cortadas). */
+    --photo-width: calc(var(--hero-w) * 1.4);
+    /* O título (2 linhas) fica sobre o tronco: o degradê começa antes, para dar contraste. */
+    --photo-fade-start: 55%;
+    --photo-fade-end: 95%;
+  }
 }
 
 /* Imagem de fundo: centralizada e levemente cortada no topo da seção. */
@@ -21,16 +82,52 @@
   margin-inline: auto;
 }
 
+/*
+ * Foto e título dividem a mesma célula do grid: a altura do Hero é a da foto, e o título
+ * se alinha à base dela. A margem posiciona o início das cabeças (--photo-heads-at da
+ * altura da foto) em --photo-heads; pode ser negativa — o topo fica cortado pelo Hero.
+ */
+.photo,
+.title {
+  grid-area: 1 / 1;
+}
+
 .photo {
   position: relative;
-  width: calc(var(--hero-w) * 0.77);
+  width: var(--photo-width);
   height: auto;
-  margin-inline: auto;
+  max-width: none; /* no celular a foto pode passar da largura da tela */
+  margin: calc(var(--photo-heads) - var(--photo-width) * var(--photo-ratio) * var(--photo-heads-at)) 0 0;
+  justify-self: center;
+  translate: calc(var(--photo-center-x) + var(--photo-x)) var(--photo-y);
+  scale: var(--photo-scale);
+  transform-origin: 50% 100%;
+  /*
+   * Base e borda direita somem no fundo: o título fica legível e os cortes da foto não
+   * aparecem. As duas máscaras se multiplicam (intersect).
+   */
+  -webkit-mask-image:
+    linear-gradient(to bottom, #000 var(--photo-fade-start), transparent var(--photo-fade-end)),
+    linear-gradient(to left, transparent 0%, #000 14%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, #000 var(--photo-fade-start), transparent var(--photo-fade-end)),
+    linear-gradient(to left, transparent 0%, #000 14%);
+  mask-composite: intersect;
 }
 
 .title {
   position: relative;
+  align-self: end;
+  padding-block-end: var(--space-md);
   text-align: center;
+}
+
+/* Celular: título mais perto da base, abaixo dos rostos. */
+@media (max-width: 767px) {
+  .title {
+    padding-block-end: var(--space-2xs);
+  }
 }
 
 /*

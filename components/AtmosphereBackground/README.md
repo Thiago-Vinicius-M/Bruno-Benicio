@@ -151,15 +151,18 @@ Em telas OLED e com brilho alto ele aparece mais — teste num celular.
 radial que vai da cor cheia no centro até transparente na borda.
 
 ```ts
-warmGlow: { color: "#c7782e", x: 90, y: 4,  size: 62, ratio: 1.25, opacity: 0.15, softness: 0.7 },
-redGlow:  { color: "#7a1a2c", x: 6,  y: 94, size: 72, ratio: 1.15, opacity: 0.24, softness: 0.75 },
+warmGlow: { color: "#c7782e", x: 102, y: -4, size: 100, ratio: 1.25, opacity: 0.2, softness: 0.5 },
+redGlow:  { color: "#7a1a2c", x: -4, y: 112, size: 100, ratio: 1.15, opacity: 0.24, softness: 0.55 },
 haze:     { color: "#e2b48a", x: 50, y: -10, size: 110, ratio: 2.4, opacity: 0.045, softness: 1 },
 ```
 
 - **Glow quente** — âmbar/dourado queimado, no canto superior direito, como um refletor fora de quadro.
+  Como o vermelho, a origem fica **fora da tela** (`x: 102, y: -4`): só o halo aparece.
 - **Glow vermelho** — vinho, no canto inferior esquerdo. Cores escuras precisam de opacidade maior
   para aparecer, por isso ele tem `0.24` contra `0.15` do quente. A diagonal entre os dois cria a
-  transição de temperatura de cor.
+  transição de temperatura de cor. A origem fica **fora da tela** (`x: -4, y: 112`): só o halo
+  entra na tela, sem um ponto visível de onde a luz sai. Para mover a luz sem revelar a origem,
+  mantenha `y` acima de ~105 e aumente `size` quando afastar a origem.
 - **Haze** — véu largo e quase invisível no topo, que "acende" levemente a parte de cima da tela.
 
 | Quero… | Altere |

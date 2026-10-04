@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
  *
  * Entre duas seções (ex.: o Marquee, que não tem id) a anterior continua ativa. No fim da
  * página a última seção é ativada mesmo que o topo dela não alcance a linha (seção curta).
- * Ids sem elemento na página (ex.: #agenda) são ignorados.
+ * Ids sem elemento na página são ignorados.
  *
  * Só leituras de layout (getBoundingClientRect), no máximo uma vez por frame.
  */

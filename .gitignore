@@ -45,3 +45,8 @@ supabase/.branches/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# videos originais/antigos (pesados, fora do site)
+public/videos/*.MOV
+public/videos/*.mov
+public/videos/*OLD.*

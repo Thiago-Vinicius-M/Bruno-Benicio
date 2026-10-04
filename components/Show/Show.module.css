@@ -1,0 +1,116 @@
+/*
+ * Seção NOSSO SHOW — mesmos tokens do site (globals.css) e a mesma linguagem da seção
+ * MÚSICAS: divisórias douradas finas, nomes na fonte de display, destaque em --color-accent.
+ *
+ *   Desktop/tablet → formatos em lista (nome à esquerda, preço à direita); repertório e
+ *                    estrutura lado a lado
+ *   Celular        → tudo empilhado; o preço fica abaixo do nome
+ */
+.show {
+  --show-line: rgb(255 195 66 / 0.14); /* divisórias (a mesma cor das da MÚSICAS) */
+
+  padding-block-start: var(--space-2xl);
+}
+
+.stage {
+  display: grid;
+  row-gap: var(--space-lg);
+}
+
+.intro {
+  display: grid;
+  justify-items: center;
+  row-gap: var(--space-3xs);
+  text-align: center;
+}
+
+.eyebrow {
+  color: var(--color-foreground-muted);
+  text-transform: uppercase;
+}
+
+/* ---------- Formatos ---------- */
+
+.packages {
+  border-block-start: 1px solid var(--show-line);
+}
+
+.package {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--space-xs);
+  padding: clamp(16px, 1.6vw, 22px) clamp(4px, 1vw, 16px);
+  border-block-end: 1px solid var(--show-line);
+}
+
+.packageInfo {
+  display: grid;
+  row-gap: 4px;
+}
+
+.packageName {
+  text-transform: uppercase;
+}
+
+.duration {
+  font-size: var(--text-nav);
+  letter-spacing: var(--tracking-nav);
+  text-transform: uppercase;
+  color: var(--color-foreground-muted);
+}
+
+.price {
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  letter-spacing: var(--tracking-display);
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+/* ---------- Repertório e estrutura ---------- */
+
+.details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-md) clamp(32px, 5vw, 72px);
+}
+
+.detail {
+  display: grid;
+  align-content: start;
+  row-gap: var(--space-3xs);
+  padding-block-start: var(--space-2xs);
+  border-block-start: 1px solid var(--show-line);
+}
+
+.label {
+  color: var(--color-accent);
+  text-transform: uppercase;
+}
+
+.note {
+  font-size: var(--text-nav);
+  letter-spacing: var(--tracking-nav);
+  text-transform: uppercase;
+  color: var(--color-foreground-muted);
+}
+
+/* Celular: preço abaixo do nome; repertório e estrutura empilhados. */
+@media (max-width: 767px) {
+  .package {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 8px;
+  }
+
+  .price {
+    font-size: var(--text-caption);
+  }
+
+  .details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+

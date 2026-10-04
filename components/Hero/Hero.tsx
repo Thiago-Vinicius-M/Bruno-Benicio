@@ -3,10 +3,12 @@
 import { Fragment, useRef } from "react";
 import Image from "next/image";
 import { useGSAP } from "@/animations/gsap";
+import { createIntroReveal } from "@/animations/introReveal";
 import { createParallax } from "@/animations/parallax";
 import { createTextStagger } from "@/animations/textStagger";
 import heroPhoto from "@/Imagens/OsDoisHero.png";
 import heroLogo from "@/Imagens/BeB LOGO FUNDO PRETO_page-0001.png";
+import { HERO_INTRO } from "./heroIntro";
 import { HERO_PARALLAX } from "./heroParallax";
 import { HERO_TITLE_STAGGER } from "./heroTitleStagger";
 import styles from "./Hero.module.css";
@@ -37,13 +39,32 @@ export function Hero() {
     { dependencies: [HERO_PARALLAX], revertOnUpdate: true },
   );
 
-  // O título é o trigger (não é animado); as palavras/letras dentro das máscaras são os alvos.
+  // Entrada ao abrir a página (após o loading): logo, depois foto, depois o título — que é
+  // entregue ao stagger dele (o título é o trigger; as palavras/letras são os alvos).
   useGSAP(
     () => {
-      const mm = createTextStagger(titleRef.current!, HERO_TITLE_STAGGER);
-      return () => mm.revert();
+      const title = titleRef.current!;
+      let titleStagger: ReturnType<typeof createTextStagger> | undefined;
+      const mm = createIntroReveal(
+        [
+          { targets: [logoRef.current!], ...HERO_INTRO.heroLogo },
+          { targets: [photoRef.current!], ...HERO_INTRO.heroPhoto },
+        ],
+        HERO_INTRO,
+        {
+          position: HERO_INTRO.titlePosition,
+          hidden: [title],
+          run: () => {
+            titleStagger = createTextStagger(title, HERO_TITLE_STAGGER);
+          },
+        },
+      );
+      return () => {
+        mm.revert();
+        titleStagger?.revert();
+      };
     },
-    { dependencies: [HERO_TITLE_STAGGER], revertOnUpdate: true },
+    { dependencies: [HERO_INTRO, HERO_TITLE_STAGGER], revertOnUpdate: true },
   );
 
   return (
@@ -57,12 +78,14 @@ export function Hero() {
         className={styles.backdrop}
         loading="eager"
       />
+      {/* Posição/escala ajustáveis: variáveis --photo-x, --photo-y e --photo-scale em Hero.module.css */}
       <Image
         ref={photoRef}
         src={heroPhoto}
-        width={800}
-        height={640}
-        alt="Bruno cantando ao microfone e Benício tocando violão"
+        width={2400}
+        height={1350}
+        sizes="(max-width: 767px) 130vw, 1000px"
+        alt="Bruno e Benício"
         className={styles.photo}
         loading="eager"
         fetchPriority="high"

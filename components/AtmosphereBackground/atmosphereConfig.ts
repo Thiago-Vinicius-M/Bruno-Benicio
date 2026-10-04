@@ -141,23 +141,34 @@ const cinematic: AtmosphereConfig = {
   },
   grain: { opacity: 0.032, size: 180, frequency: 0.85 },
   vignette: { strength: 0.55, center: 35, softness: 0.9 },
+  /*
+   * Espelho do redGlow, no canto oposto: origem FORA da tela (acima e à direita), só o halo
+   * entra na tela. y < 0 = acima · x > 100 = à direita; size maior compensa a distância e
+   * opacity um pouco maior mantém a intensidade do halo visível (antes: 0.15 com origem na tela).
+   */
   warmGlow: {
     color: "#c7782e",
-    x: 90,
-    y: 4,
-    size: 62,
+    x: 102,
+    y: -4,
+    size: 100,
     ratio: 1.25,
-    opacity: 0.15,
-    softness: 0.7,
+    opacity: 0.2,
+    softness: 0.5,
   },
+  /*
+   * Origem FORA da tela (abaixo e à esquerda): só o halo aparece, sem um "ponto" de onde a
+   * luz sai. x/y movem a origem (y > 100 = abaixo da tela · x < 0 = à esquerda); size maior
+   * compensa a distância, para o halo alcançar a mesma área de antes. softness menor mantém
+   * mais cor na parte do halo que fica visível.
+   */
   redGlow: {
     color: "#7a1a2c",
-    x: 6,
-    y: 94,
-    size: 72,
+    x: -4,
+    y: 112,
+    size: 100,
     ratio: 1.15,
     opacity: 0.24,
-    softness: 0.75,
+    softness: 0.55,
   },
   haze: {
     color: "#e2b48a",
@@ -217,8 +228,8 @@ export const ATMOSPHERE_PRESETS = {
   stage: mergeAtmosphere(cinematic, {
     grain: { opacity: 0.04 },
     vignette: { strength: 0.65 },
-    warmGlow: { opacity: 0.22, size: 70 },
-    redGlow: { opacity: 0.32, size: 78 },
+    warmGlow: { opacity: 0.22, size: 98 },
+    redGlow: { opacity: 0.32, size: 108 },
     haze: { opacity: 0.07 },
     beams: { enabled: true, opacity: 0.07 },
     particles: { count: 22, mobileCount: 9, opacity: [0.08, 0.4] },

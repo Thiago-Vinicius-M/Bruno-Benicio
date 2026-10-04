@@ -45,6 +45,10 @@ import type { CinematicTimelineParams } from "@/animations/cinematicTimeline";
  *
  * markers
  *   true desenha as linhas de start/end para depuração. Manter false em produção.
+ *
+ * mobile
+ *   false = no celular (≤ 767px) não há animação: frase, título e vídeos já aparecem no
+ *   lugar, sem pin. true = a mesma sequência do desktop.
  */
 export const VIDEOS_CINEMATIC: CinematicTimelineParams = {
   pos2: ">",
@@ -59,4 +63,5 @@ export const VIDEOS_CINEMATIC: CinematicTimelineParams = {
   screens: 2.5,
   scrub: 1,
   markers: false,
+  mobile: false,
 };

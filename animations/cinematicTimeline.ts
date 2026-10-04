@@ -49,6 +49,8 @@ export type CinematicTimelineParams = {
   screens: number;
   scrub: boolean | number;
   markers: boolean;
+  /** false = sem animação no celular (≤ 767px): a seção já aparece na composição final */
+  mobile: boolean;
 };
 
 export type CinematicTimelineElements = {
@@ -90,7 +92,7 @@ export function createCinematicTimeline(
 
   mm.add(MEDIA, (context) => {
     const { isMobile, reduceMotion } = context.conditions as MediaConditions;
-    if (reduceMotion) return; // composição final estática (CSS)
+    if (reduceMotion || (isMobile && !params.mobile)) return; // composição final estática (CSS)
 
     // y que leva o centro do texto ao centro da área visível durante o pin — no celular,
     // ao centro da mídia (já reduzida) quando ela é uma faixa baixa, mas nunca abaixo do

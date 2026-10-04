@@ -3,8 +3,9 @@
 import { useEffect, useRef } from "react";
 import { useGSAP } from "@/animations/gsap";
 import { createCinematicTimeline, scrollToCinematicEnd } from "@/animations/cinematicTimeline";
+import { MoreButton } from "@/components/Experience/MoreButton";
 import { VideoGallery } from "@/components/VideoGallery/VideoGallery";
-import { VIDEOS } from "./videoList";
+import { VIDEO_HIGHLIGHTS, VIDEOS } from "./videoList";
 import { VIDEOS_CINEMATIC } from "./videosCinematic";
 import styles from "./Videos.module.css";
 
@@ -74,7 +75,17 @@ export function Videos() {
         <h2 ref={titleRef} id="videos-title" className={`type-title ${styles.title}`}>
           VIDEOS
         </h2>
-        <VideoGallery ref={galleryRef} videos={VIDEOS} className={styles.gallery} />
+        <VideoGallery
+          ref={galleryRef}
+          videos={VIDEOS}
+          highlights={VIDEO_HIGHLIGHTS}
+          completeRowsOnly
+          className={styles.gallery}
+        />
+      </div>
+      {/* A Home mostra uma seleção (celular: destaques · desktop: linhas completas); a galeria completa abre numa subtela. */}
+      <div className={`container-narrow ${styles.more}`}>
+        <MoreButton experience="videos" />
       </div>
     </section>
   );

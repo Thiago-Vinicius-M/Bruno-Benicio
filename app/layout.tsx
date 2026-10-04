@@ -32,7 +32,7 @@ const dmSerifDisplay = DM_Serif_Display({
 });
 
 const SITE_NAME = "Bruno & Benício";
-/** Texto da seção "Sobre nós" (components/About/About.tsx). */
+/** Texto da seção "Sobre nós" (components/About/aboutContent.ts). */
 const DESCRIPTION =
   "Nossa paixão pela música nos uniu com um propósito: levar alegria, música e bons momentos por onde passamos.";
 

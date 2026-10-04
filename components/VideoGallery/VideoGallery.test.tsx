@@ -96,6 +96,40 @@ describe("VideoGallery", () => {
     expect(players(container)).toHaveLength(0);
   });
 
+  it("highlights marca os destaques do celular com a ordem pedida; os outros ficam sem marca", () => {
+    const { container } = render(<VideoGallery videos={VIDEOS} highlights={["v1", "h1", "h2"]} />);
+    const gallery = container.firstElementChild as HTMLElement;
+    const marked = [...container.querySelectorAll<HTMLElement>("[data-highlight]")].map((li) => [
+      li.querySelector("h3")!.textContent,
+      li.style.getPropertyValue("--highlight-order"),
+    ]);
+
+    expect(gallery.hasAttribute("data-highlights")).toBe(true);
+    expect(marked).toEqual([
+      ["Foi Deus", "1"],
+      ["Amigo", "2"],
+      ["Bastidores", "0"],
+    ]);
+    // todos continuam no DOM (tablet/desktop mostram a lista inteira)
+    expect(container.querySelectorAll("li")).toHaveLength(VIDEOS.length);
+  });
+
+  it("completeRowsOnly marca a galeria (o CSS esconde a linha de sobras no tablet/desktop)", () => {
+    const extra: GalleryVideo = { id: "v3", type: "video", sourceType: "local", orientation: "portrait", title: "Sobra" };
+    const { container } = render(<VideoGallery videos={[...VIDEOS, extra]} completeRowsOnly />);
+    const gallery = container.firstElementChild as HTMLElement;
+
+    expect(gallery.hasAttribute("data-complete-rows")).toBe(true);
+    expect([...gallery.children].map((row) => row.getAttribute("data-template"))).toEqual(["pair", "feature", "rest"]);
+    expect(gallery.querySelector('[data-template="rest"]')!.textContent).toContain("Sobra");
+  });
+
+  it("sem highlights nenhum card é marcado", () => {
+    const { container } = render(<VideoGallery videos={VIDEOS} />);
+    expect((container.firstElementChild as HTMLElement).hasAttribute("data-highlights")).toBe(false);
+    expect(container.querySelectorAll("[data-highlight]")).toHaveLength(0);
+  });
+
   it("com onPlay o play é delegado (modal/lightbox) e o card não toca", () => {
     const played: string[] = [];
     const { container } = render(<VideoGallery videos={VIDEOS} onPlay={(video) => played.push(video.id)} />);

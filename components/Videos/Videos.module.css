@@ -31,6 +31,12 @@
   margin-block-start: var(--space-xl);
 }
 
+/* "Ver mais" da galeria completa: centralizado abaixo dos vídeos. */
+.more {
+  display: grid;
+  margin-block-start: var(--space-md);
+}
+
 .closing {
   margin-block-start: var(--space-sm);
 }
