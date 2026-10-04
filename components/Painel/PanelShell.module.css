@@ -1,0 +1,281 @@
+/*
+ * Desktop/notebook: topo fixo + barra lateral + conteúdo.
+ * Tablet/celular (< 900px): a barra lateral vira gaveta aberta pelo botão de menu.
+ */
+.shell {
+  display: grid;
+  grid-template-columns: var(--panel-sidebar-width) minmax(0, 1fr);
+  grid-template-rows: var(--panel-header-height) minmax(0, 1fr);
+  grid-template-areas:
+    "header header"
+    "nav content";
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.header {
+  grid-area: header;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-inline: 20px;
+  background: var(--color-header-background);
+  border-block-end: 1px solid var(--panel-line);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-size: var(--panel-text-lg);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-display);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.brandLogo {
+  width: 64px;
+  height: auto;
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-inline-start: auto;
+  min-width: 0;
+}
+
+.userInfo {
+  display: grid;
+  min-width: 0;
+  text-align: end;
+  line-height: 1.25;
+}
+
+.userName {
+  overflow: hidden;
+  font-weight: var(--weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userRole {
+  font-size: var(--panel-text-sm);
+  color: var(--panel-muted);
+}
+
+.logout {
+  min-height: 36px;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: var(--panel-text-sm);
+  color: var(--color-foreground);
+  background: transparent;
+  border: 1px solid var(--panel-line-strong);
+  border-radius: var(--panel-radius-sm);
+  cursor: pointer;
+}
+
+.logout:hover {
+  background: rgb(255 255 255 / 0.06);
+}
+
+.sidebar {
+  grid-area: nav;
+  position: sticky;
+  top: var(--panel-header-height);
+  align-self: start;
+  height: calc(100dvh - var(--panel-header-height));
+  padding: 16px 12px;
+  overflow-y: auto;
+  background: var(--panel-surface);
+  border-inline-end: 1px solid var(--panel-line);
+}
+
+.navList {
+  display: grid;
+  gap: 2px;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: var(--panel-radius-sm);
+  color: var(--panel-muted);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+a.navLink:hover {
+  color: var(--color-foreground);
+  background: rgb(255 255 255 / 0.05);
+}
+
+a.navLink:focus-visible,
+.menuButton:focus-visible,
+.logout:focus-visible,
+.brand:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.navLink[aria-current="page"] {
+  color: var(--color-foreground);
+  background: rgb(255 195 66 / 0.12);
+  box-shadow: inset 3px 0 0 var(--color-accent);
+}
+
+.navLink[aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.soon {
+  padding: 2px 6px;
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--panel-line-strong);
+  border-radius: 999px;
+}
+
+.content {
+  grid-area: content;
+  min-width: 0;
+  padding: 32px clamp(16px, 3vw, 40px) 48px;
+}
+
+.menuButton,
+.backdrop {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "header"
+      "content";
+  }
+
+  .header {
+    padding-inline: 12px;
+  }
+
+  .menuButton {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    border-radius: var(--panel-radius-sm);
+    cursor: pointer;
+  }
+
+  /* Três linhas que viram um X quando o menu está aberto. */
+  .menuIcon,
+  .menuIcon::before,
+  .menuIcon::after {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: currentColor;
+    border-radius: 1px;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+  }
+
+  .menuIcon {
+    position: relative;
+  }
+
+  .menuIcon::before,
+  .menuIcon::after {
+    content: "";
+    position: absolute;
+    left: 0;
+  }
+
+  .menuIcon::before {
+    top: -6px;
+  }
+
+  .menuIcon::after {
+    top: 6px;
+  }
+
+  .menuIcon[data-open] {
+    background: transparent;
+  }
+
+  .menuIcon[data-open]::before {
+    transform: translateY(6px) rotate(45deg);
+  }
+
+  .menuIcon[data-open]::after {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+
+  .sidebar {
+    position: fixed;
+    top: var(--panel-header-height);
+    bottom: 0;
+    left: 0;
+    z-index: 15;
+    width: min(280px, 82vw);
+    height: auto;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.2s ease, visibility 0.2s;
+  }
+
+  .sidebar[data-open] {
+    transform: none;
+    visibility: visible;
+  }
+
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: var(--panel-header-height) 0 0;
+    z-index: 10;
+    background: rgb(0 0 0 / 0.5);
+  }
+
+  .content {
+    padding-block-start: 24px;
+  }
+}
+
+/* Celular: marca só com o logo, para o nome do usuário caber. */
+@media (max-width: 479px) {
+  .brand span {
+    display: none;
+  }
+
+  .user {
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .menuIcon,
+  .menuIcon::before,
+  .menuIcon::after {
+    transition: none;
+  }
+}

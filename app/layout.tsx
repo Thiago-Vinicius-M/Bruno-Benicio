@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Barlow_Condensed, DM_Serif_Display, Manrope } from "next/font/google";
 import { AtmosphereBackground } from "@/components/AtmosphereBackground/AtmosphereBackground";
+import { getSiteUrl } from "@/lib/site";
 import "./globals.css";
 
 /*
@@ -30,8 +31,28 @@ const dmSerifDisplay = DM_Serif_Display({
   variable: "--font-dm-serif-display",
 });
 
+const SITE_NAME = "Bruno & Benício";
+/** Texto da seção "Sobre nós" (components/About/About.tsx). */
+const DESCRIPTION =
+  "Nossa paixão pela música nos uniu com um propósito: levar alegria, música e bons momentos por onde passamos.";
+
 export const metadata: Metadata = {
-  title: "Bruno & Benício",
+  // Base das URLs absolutas (canônica, Open Graph). Ver lib/site.ts.
+  metadataBase: getSiteUrl(),
+  title: SITE_NAME,
+  description: DESCRIPTION,
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: DESCRIPTION,
+  },
+  twitter: {
+    card: "summary",
+    title: SITE_NAME,
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -2,7 +2,6 @@
 
 import { Fragment, useRef } from "react";
 import Image from "next/image";
-import { PlaceholderImage } from "@/components/PlaceholderImage/PlaceholderImage";
 import { useGSAP } from "@/animations/gsap";
 import { createParallax } from "@/animations/parallax";
 import { createTextStagger } from "@/animations/textStagger";
