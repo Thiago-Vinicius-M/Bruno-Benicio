@@ -111,19 +111,27 @@ describe("Videos — limites por dispositivo (mesmo HTML, CSS decide)", () => {
     expect(more.hasAttribute("data-hide-mobile")).toBe(false);
   });
 
-  it("principal horizontal ganha linha própria; vertical entra na composição", () => {
+  it("principal (horizontal ou vertical) ganha linha própria; secundários vêm abaixo", () => {
     const { container } = renderVideos(many);
     const firstRow = container.querySelector("#videos ul")!;
     expect([...firstRow.querySelectorAll("h3")].map((h3) => h3.textContent)).toEqual(["principal"]);
+    expect(firstRow.getAttribute("data-lead")).toBe("landscape");
 
     const portrait = renderVideos({
       ...many,
       main: video("vertical", "portrait"),
       secondary: [video("h1", "landscape"), video("h2", "landscape")],
     });
-    const row = portrait.container.querySelectorAll("#videos ul")[0];
-    expect(row.querySelector("li")?.getAttribute("data-orientation")).toBe("portrait");
-    expect(row.querySelectorAll("li").length).toBeGreaterThan(1);
+    const [row, ...others] = portrait.container.querySelectorAll("#videos ul");
+    expect(row.getAttribute("data-lead")).toBe("portrait");
+    expect([...row.querySelectorAll("h3")].map((h3) => h3.textContent)).toEqual(["vertical"]);
+    expect(others.length).toBeGreaterThan(0);
+    expect(others.every((other) => !other.hasAttribute("data-lead"))).toBe(true);
+  });
+
+  it("sem principal: nenhuma linha de destaque", () => {
+    const { container } = renderVideos({ ...many, main: null });
+    expect(container.querySelector("#videos ul[data-lead]")).toBeNull();
   });
 });
 

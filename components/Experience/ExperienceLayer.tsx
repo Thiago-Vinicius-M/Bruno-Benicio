@@ -102,7 +102,10 @@ export function ExperienceLayer({ active, onClose }: ExperienceLayerProps) {
       <div className={styles.scroller}>
         <div className={styles.bar}>
           <button type="button" className={styles.back} onClick={onClose} data-experience-item>
-            <span aria-hidden="true">←</span> Voltar
+            <svg className={styles.backIcon} viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M19 12H5M11 6l-6 6 6 6" />
+            </svg>
+            Voltar
           </button>
         </div>
 
@@ -111,9 +114,6 @@ export function ExperienceLayer({ active, onClose }: ExperienceLayerProps) {
             {title}
           </h2>
           <Content />
-          <button type="button" className={`${styles.back} ${styles.backEnd}`} onClick={onClose}>
-            <span aria-hidden="true">←</span> Voltar
-          </button>
         </div>
       </div>
     </div>

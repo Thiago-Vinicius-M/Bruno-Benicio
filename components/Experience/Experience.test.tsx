@@ -56,9 +56,9 @@ describe("Subtelas (ExperienceProvider)", () => {
     expect(history.state).toEqual({ experience: "videos" });
     for (const el of document.querySelectorAll<HTMLElement>("[data-experience-home]")) expect(el.inert).toBe(true);
     expect(document.documentElement.style.overflow).toBe("hidden");
-    // voltar no topo (fixo) e no fim do conteúdo
+    // um único voltar, fixo no topo
     const buttons = [...screen.getByRole("dialog", { hidden: true }).querySelectorAll("button")];
-    expect(buttons.filter((button) => button.textContent === "← Voltar")).toHaveLength(2);
+    expect(buttons.filter((button) => button.textContent === "Voltar")).toHaveLength(1);
   });
 
   it("voltar do navegador fecha a subtela, devolve a Home e o foco ao 'Ver mais'", async () => {

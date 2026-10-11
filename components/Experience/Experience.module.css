@@ -59,8 +59,16 @@
     color 0.25s ease;
 }
 
-.backEnd {
-  justify-self: center;
+.backIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.25s ease;
 }
 
 .back:focus-visible {
@@ -72,6 +80,10 @@
   .back:hover {
     border-color: var(--color-accent);
     color: var(--color-accent);
+  }
+
+  .back:hover .backIcon {
+    transform: translateX(-3px);
   }
 }
 
@@ -119,6 +131,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .back,
+  .backIcon,
   .more {
     transition: none;
   }

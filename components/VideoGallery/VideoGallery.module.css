@@ -1,13 +1,15 @@
 /*
  * Galeria de vídeos — as linhas e a posição de cada card vêm de galleryLayout.ts, por
  * variáveis no HTML:
- *   linha (.row) → --row-columns  colunas proporcionais ao formato de cada card
- *                  --row-aspect   soma das proporções (largura ÷ altura da linha)
+ *   linha (.row) → --row-columns  largura de cada coluna (frações que somam 1)
+ *                  --row-aspect   largura das colunas ÷ altura da linha
  *                  --row-gaps     número de espaços entre colunas
  *   card (.item) → --col / --row  coluna e linha no grid da linha
  *
  *   Tablet e desktop (≥ 768px)
- *     Todos os cards de uma linha têm a mesma altura e a linha fecha a largura inteira.
+ *     Em geral os cards de uma linha têm a mesma altura e a linha fecha a largura inteira.
+ *     Linha mista (vertical e horizontal solto): o vertical define a altura e o horizontal,
+ *     mais baixo, fica centralizado na altura da linha.
  *     Pilha (data-stacked): dois horizontais um em cima do outro numa coluna; dividem a
  *     altura da linha. Linhas que ficariam altas demais (ex.: só verticais) param em
  *     --gallery-row-max de altura, ficam mais estreitas e centralizadas.
@@ -23,8 +25,12 @@
 .gallery {
   --gallery-gap: clamp(12px, 1.85vw, 20px); /* ≈ LAYOUT.gap de galleryLayout.ts */
   --gallery-radius: 0px; /* cantos retos, como os demais vídeos do site */
-  --gallery-row-max: min(72svh, 540px); /* ≈ LAYOUT.maxRowHeight · 1080px */
+  --gallery-row-max: min(80svh, 648px); /* ≈ LAYOUT.maxRowHeight · 1080px */
   --gallery-portrait-max: 72svh;
+  /* Vídeo principal (data-lead): bloco próprio, maior que os secundários e separado deles. */
+  --gallery-lead-landscape-max: min(78svh, 608px); /* 608px ≈ 1080 · 9/16: largura inteira */
+  --gallery-lead-portrait-max: min(84svh, 864px); /* ≈ LAYOUT.leadHeight.portrait · 1080px */
+  --gallery-lead-space: clamp(12px, 3vw, 40px); /* espaço extra entre o principal e os secundários */
   --gallery-surface: #0d0f12;
   --gallery-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -37,16 +43,27 @@
   gap: var(--gallery-gap);
 }
 
+.row[data-lead] {
+  margin-block-end: var(--gallery-lead-space);
+}
+
 @media (min-width: 768px) {
   .row {
+    /* --row-scale < 1: linha de secundários abaixo do principal (teto menor) */
+    --row-height-max: calc(var(--gallery-row-max) * var(--row-scale, 1));
+
     grid-template-columns: var(--row-columns);
     /* altura da linha = (largura − espaços) ÷ --row-aspect; acima do teto, a linha encolhe */
-    /* --row-scale < 1: linha de secundários abaixo de um principal horizontal (teto menor) */
-    width: min(
-      100%,
-      calc(var(--gallery-row-max) * var(--row-scale, 1) * var(--row-aspect) + var(--row-gaps) * var(--gallery-gap))
-    );
+    width: min(100%, calc(var(--row-height-max) * var(--row-aspect) + var(--row-gaps) * var(--gallery-gap)));
     margin-inline: auto;
+  }
+
+  .row[data-lead="landscape"] {
+    --row-height-max: var(--gallery-lead-landscape-max);
+  }
+
+  .row[data-lead="portrait"] {
+    --row-height-max: var(--gallery-lead-portrait-max);
   }
 
   .row[data-stacked] {
@@ -56,6 +73,11 @@
   .row > .item {
     grid-column: var(--col);
     grid-row: var(--row);
+    align-self: center; /* horizontal da linha mista: mais baixo que o vertical */
+  }
+
+  .row > .item[data-stacked] {
+    align-self: stretch;
   }
 }
 
@@ -281,6 +303,20 @@
   .item[data-orientation="portrait"] {
     justify-self: center;
     width: min(100%, calc(var(--gallery-portrait-max) * 9 / 16));
+  }
+
+  /* Principal: horizontal de ponta a ponta da tela; vertical mais alto que os secundários. */
+  .row[data-lead="landscape"] {
+    margin-inline: calc(-1 * var(--page-gutter));
+  }
+
+  .row[data-lead="portrait"] .item {
+    width: min(100%, calc(var(--gallery-lead-portrait-max) * 9 / 16));
+  }
+
+  /* secundários verticais abaixo de um principal: um pouco menores, sem disputar com ele */
+  .row[data-lead] ~ .row .item[data-orientation="portrait"] {
+    width: min(100%, calc(var(--gallery-portrait-max) * 0.8 * 9 / 16));
   }
 
   /* Além do limite de vídeos da Home no celular (vão para o "Ver mais"). */

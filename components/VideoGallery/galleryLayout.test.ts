@@ -45,7 +45,9 @@ describe("buildGalleryRows", () => {
     expect(layout("LL")).toBe("L L");
     expect(layout("LP")).toBe("L P");
     expect(layout("LLLL")).toBe("L L | L L");
-    expect(layout("PPPP")).toBe("P P P P");
+    // verticais grandes: dois por linha em vez de quatro estreitos
+    expect(layout("PPPP")).toBe("P P | P P");
+    expect(layout("PPP")).toBe("P P P");
     // três horizontais: um grande e um par, em vez de três pequenos
     expect(layout("LLL")).toBe("L | L L");
     // dois horizontais empilhados entre/ao lado de verticais
@@ -77,20 +79,31 @@ describe("buildGalleryRows", () => {
   it("nenhum vídeo fica pequeno demais para assistir, em qualquer combinação", () => {
     for (const pattern of allSequences(9)) {
       for (const row of buildGalleryRows(sequence(pattern))) {
-        const { height } = rowGeometry(row.units);
-        for (const unit of row.units) {
+        const { height, widths } = rowGeometry(row.units);
+        row.units.forEach((unit, index) => {
           if (unit.kind === "stack") {
             // cada metade da pilha: ≥ 40% da largura da galeria (≈ 430px no desktop)
             expect(((height - LAYOUT.gap) / 2) * (16 / 9), pattern).toBeGreaterThanOrEqual(0.4);
           } else if (unit.video.orientation === "landscape") {
-            expect(height * (16 / 9), pattern).toBeGreaterThanOrEqual(0.4);
+            expect(widths[index], pattern).toBeGreaterThanOrEqual(0.4);
           } else {
-            // vertical: ≥ 33% da largura de altura (≈ 355px no desktop)
-            expect(height, pattern).toBeGreaterThanOrEqual(0.33);
+            // vertical: ≥ 45% da largura de altura (≈ 490px no desktop)
+            expect(height, pattern).toBeGreaterThanOrEqual(0.45);
           }
-        }
+        });
       }
     }
+  });
+
+  it("linha mista: o vertical não encolhe para o horizontal caber", () => {
+    const [row] = buildGalleryRows(sequence("LP"));
+    const { height, widths, fill } = rowGeometry(row.units);
+    // vertical na altura confortável; o horizontal fica com o resto da largura, mais baixo
+    expect(height).toBeCloseTo(LAYOUT.minPortraitHeight, 6);
+    expect(widths[0] / (16 / 9)).toBeLessThan(height);
+    expect(widths[0]).toBeGreaterThanOrEqual(LAYOUT.minLandscapeWidth);
+    expect(fill).toBeCloseTo(1, 6);
+    expect(row.columns.reduce((sum, value) => sum + value, 0)).toBeCloseTo(1, 6);
   });
 
   it("nenhuma linha passa do teto de altura; linhas que não chegam nele ocupam a largura toda", () => {
@@ -103,9 +116,11 @@ describe("buildGalleryRows", () => {
     }
   });
 
-  it("a soma das proporções da linha (CSS --row-aspect) vem junto", () => {
-    const [row] = buildGalleryRows(sequence("LP"));
-    expect(row.aspect).toBeCloseTo(16 / 9 + 9 / 16, 6);
+  it("a proporção da linha (CSS --row-aspect) vem junto: largura das colunas ÷ altura", () => {
+    const [justified] = buildGalleryRows(sequence("LL"));
+    expect(justified.aspect).toBeCloseTo(2 * (16 / 9), 6);
+    const [mixed] = buildGalleryRows(sequence("LP"));
+    expect(mixed.aspect).toBeCloseTo((1 - LAYOUT.gap) / LAYOUT.minPortraitHeight, 6);
   });
 });
 
@@ -127,18 +142,52 @@ describe("buildLeadRows (Home com vídeo principal)", () => {
     for (const rest of ["L", "LL", "LLP", "LPL", "PP", "LLLL"]) {
       const videos = sequence(`L${rest}`);
       const [leadRow, ...others] = buildLeadRows(videos, videos[0].id);
-      const leadHeight = rowGeometry(leadRow.units).height;
+      const leadHeight = rowGeometry(leadRow.units, leadRow.maxHeight).height;
       for (const row of others) {
-        expect(rowGeometry(row.units, row.maxHeight).height, `L${rest}`).toBeLessThanOrEqual(leadHeight * 0.6 + 1e-9);
+        const withPortrait = row.units.some((unit) => unit.kind === "single" && unit.video.orientation === "portrait");
+        // só horizontais: 60% da altura dele; com vertical, um pouco mais (o vertical é estreito)
+        const ratio = withPortrait ? 0.8 : 0.6;
+        expect(rowGeometry(row.units, row.maxHeight).height, `L${rest}`).toBeLessThanOrEqual(leadHeight * ratio + 1e-9);
       }
     }
   });
 
-  it("principal vertical: primeira coluna da composição normal (nunca esticado nem empilhado)", () => {
-    for (const rest of ["", "L", "LL", "PP", "LLP"]) {
+  it("principal horizontal: ocupa a largura inteira da galeria", () => {
+    const videos = sequence("LLP");
+    const [leadRow] = buildLeadRows(videos, videos[0].id);
+    expect(leadRow.lead).toBe("landscape");
+    expect(rowGeometry(leadRow.units, leadRow.maxHeight).fill).toBeCloseTo(1, 6);
+  });
+
+  it("principal vertical: sozinho na primeira linha, secundários abaixo (nunca ao lado)", () => {
+    for (const rest of ["", "L", "P", "LL", "PP", "LLP", "PLLP"]) {
       const pattern = `P${rest}`;
-      expect(lead(pattern), pattern).toBe(layout(pattern));
-      expect(lead(pattern).startsWith("P")).toBe(true);
+      const rows = lead(pattern).split(" | ");
+      expect(rows[0], pattern).toBe("P");
+      if (rest) expect(rows.length, pattern).toBeGreaterThan(1);
+    }
+  });
+
+  it("principal vertical: bem maior que qualquer secundário, na proporção 9:16", () => {
+    for (const rest of ["L", "LL", "LLP", "PP", "PPPP"]) {
+      const videos = sequence(`P${rest}`);
+      const [leadRow, ...others] = buildLeadRows(videos, videos[0].id);
+      expect(leadRow.lead).toBe("portrait");
+      const leadHeight = rowGeometry(leadRow.units, leadRow.maxHeight).height;
+      const leadArea = leadHeight * leadHeight * (9 / 16);
+      for (const row of others) {
+        const { height, widths } = rowGeometry(row.units, row.maxHeight);
+        expect(height, `P${rest}`).toBeLessThanOrEqual(leadHeight * 0.6 + 1e-9);
+        row.units.forEach((unit, index) => {
+          const area =
+            unit.kind === "stack"
+              ? height * height * (16 / 9) * 0.25
+              : unit.video.orientation === "landscape"
+                ? (widths[index] * widths[index]) / (16 / 9)
+                : height * height * (9 / 16);
+          expect(area, `P${rest}`).toBeLessThan(leadArea);
+        });
+      }
     }
   });
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type CSSProperties, type Ref } from "react";
-import { buildLeadRows, LAYOUT, unitAspect, unitVideos, type GalleryRow, type LayoutUnit } from "./galleryLayout";
+import { buildLeadRows, LAYOUT, rowGeometry, unitVideos, type GalleryRow, type LayoutUnit } from "./galleryLayout";
 import type { GalleryVideo } from "./types";
 import { VideoGalleryItem } from "./VideoGalleryItem";
 import styles from "./VideoGallery.module.css";
@@ -31,8 +31,8 @@ type VideoGalleryProps = {
 const GALLERY_MAX_PX = 1080;
 
 /** `sizes` da thumbnail: largura da coluna do card na linha (celular: tela inteira). */
-function thumbnailSizes(row: GalleryRow, unit: LayoutUnit) {
-  const fraction = ((1 - (row.units.length - 1) * LAYOUT.gap) * unitAspect(unit)) / row.aspect;
+function thumbnailSizes(row: GalleryRow, column: number) {
+  const fraction = Math.min(1, rowGeometry(row.units, row.maxHeight).widths[column]);
   return `(max-width: 767px) 100vw, (max-width: ${GALLERY_MAX_PX + 60}px) ${Math.ceil(fraction * 100)}vw, ${Math.ceil(fraction * GALLERY_MAX_PX)}px`;
 }
 
@@ -69,7 +69,7 @@ export function VideoGallery({ videos, onPlay, desktopCount, mobileCount, leadId
             "--row": unit.kind === "stack" ? level + 1 : stacked ? "1 / span 2" : 1,
           } as CSSProperties
         }
-        sizes={row ? thumbnailSizes(row, unit) : "100vw"}
+        sizes={row ? thumbnailSizes(row, column) : "100vw"}
         playing={playingId === video.id}
         onPlay={() => (onPlay ? onPlay(video) : setPlayingId(video.id))}
         onStop={() => setPlayingId(null)}
@@ -82,7 +82,8 @@ export function VideoGallery({ videos, onPlay, desktopCount, mobileCount, leadId
       {rows.map((row) => {
         const stacked = row.units.some((unit) => unit.kind === "stack");
         const rowStyle = {
-          "--row-columns": row.units.map((unit) => `${unitAspect(unit).toFixed(4)}fr`).join(" "),
+          // frações que somam 1: com soma < 1 (ex.: um vertical sozinho) o grid não ocuparia a linha toda
+          "--row-columns": row.columns.map((fraction) => `${fraction.toFixed(4)}fr`).join(" "),
           "--row-aspect": row.aspect.toFixed(4),
           "--row-gaps": row.units.length - 1,
           "--row-scale": ((row.maxHeight ?? LAYOUT.maxRowHeight) / LAYOUT.maxRowHeight).toFixed(4),
@@ -95,6 +96,7 @@ export function VideoGallery({ videos, onPlay, desktopCount, mobileCount, leadId
             className={styles.row}
             style={rowStyle}
             data-stacked={stacked || undefined}
+            data-lead={row.lead}
             data-mobile-hidden={rowVideos.every(hiddenOnMobile) || undefined}
           >
             {row.units.flatMap((unit, column) => unitVideos(unit).map((video, level) => item(video, row, unit, column, level)))}

@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { buildLeadRows, LAYOUT, unitAspect, unitVideos } from "@/components/VideoGallery/galleryLayout";
+import { buildLeadRows, LAYOUT, unitVideos } from "@/components/VideoGallery/galleryLayout";
 import type { GalleryVideo } from "@/components/VideoGallery/types";
 import { resolveThumbnail } from "@/components/VideoGallery/videoSources";
 import css from "./Videos.module.css";
@@ -33,7 +33,7 @@ export function LayoutPreview({ videos, label, leadId, note = "No celular, uma c
               data-stacked={stacked || undefined}
               style={
                 {
-                  "--row-columns": row.units.map((unit) => `${unitAspect(unit).toFixed(4)}fr`).join(" "),
+                  "--row-columns": row.columns.map((fraction) => `${fraction.toFixed(4)}fr`).join(" "),
                   "--row-aspect": row.aspect.toFixed(4),
                   "--row-gaps": row.units.length - 1,
                   "--row-scale": ((row.maxHeight ?? LAYOUT.maxRowHeight) / LAYOUT.maxRowHeight).toFixed(4),

@@ -34,8 +34,9 @@ describe("VideoGallery", () => {
       ["portrait", "landscape"],
       ["landscape", "portrait"],
     ]);
-    expect(rows[1].style.getPropertyValue("--row-columns")).toBe("0.5625fr 1.7778fr");
-    expect(rows[1].style.getPropertyValue("--row-aspect")).toBe("2.3403");
+    // linha mista: o vertical na altura confortável, o horizontal com o resto da largura (somam 1)
+    expect(rows[1].style.getPropertyValue("--row-columns")).toBe("0.3157fr 0.6843fr");
+    expect(rows[1].style.getPropertyValue("--row-aspect")).toBe("1.7818");
     expect(rows[1].style.getPropertyValue("--row-gaps")).toBe("1");
     expect([...rows[1].children].map((li) => (li as HTMLElement).style.getPropertyValue("--col"))).toEqual(["1", "2"]);
   });

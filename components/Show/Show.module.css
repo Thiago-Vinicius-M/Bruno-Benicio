@@ -292,8 +292,6 @@
   display: grid;
   align-content: start;
   row-gap: var(--space-3xs);
-  padding-block-start: var(--space-2xs);
-  border-block-start: 1px solid var(--show-line);
 }
 
 .label {
