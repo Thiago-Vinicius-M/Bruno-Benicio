@@ -24,18 +24,44 @@ beforeAll(() => {
 });
 
 describe("VideoGallery", () => {
-  it("monta as linhas com orientação e posição de cada card", () => {
+  it("monta as linhas na ordem da lista, com colunas proporcionais ao formato de cada card", () => {
     const { container } = render(<VideoGallery videos={VIDEOS} />);
-    const rows = container.querySelectorAll("[data-template]");
+    const rows = [...container.querySelectorAll<HTMLElement>("ul")];
 
-    expect([...rows].map((row) => row.getAttribute("data-template"))).toEqual(["pair", "feature"]);
-    const feature = [...rows[1].children].map((li) => [li.getAttribute("data-slot"), li.getAttribute("data-orientation")]);
-    expect(feature).toEqual([
-      ["0", "portrait"],
-      ["1", "landscape"],
-      ["2", "landscape"],
-      ["3", "portrait"],
+    // H H · V H · H V
+    expect(rows.map((row) => [...row.children].map((li) => li.getAttribute("data-orientation")))).toEqual([
+      ["landscape", "landscape"],
+      ["portrait", "landscape"],
+      ["landscape", "portrait"],
     ]);
+    expect(rows[1].style.getPropertyValue("--row-columns")).toBe("0.5625fr 1.7778fr");
+    expect(rows[1].style.getPropertyValue("--row-aspect")).toBe("2.3403");
+    expect(rows[1].style.getPropertyValue("--row-gaps")).toBe("1");
+    expect([...rows[1].children].map((li) => (li as HTMLElement).style.getPropertyValue("--col"))).toEqual(["1", "2"]);
+  });
+
+  it("pilha: dois horizontais na mesma coluna, um em cima do outro; os outros ocupam as duas linhas", () => {
+    const [h1, h2, v1, , , v2] = VIDEOS;
+    const { container } = render(<VideoGallery videos={[h1, h2, v1, v2]} />);
+    const row = container.querySelector<HTMLElement>("ul")!;
+    const cells = [...row.children].map((li) => {
+      const style = (li as HTMLElement).style;
+      return [li.hasAttribute("data-stacked"), style.getPropertyValue("--col"), style.getPropertyValue("--row")];
+    });
+
+    expect(row.hasAttribute("data-stacked")).toBe(true);
+    expect(cells).toEqual([
+      [true, "1", "1"],
+      [true, "1", "2"],
+      [false, "2", "1 / span 2"],
+      [false, "3", "1 / span 2"],
+    ]);
+  });
+
+  it("thumbnail com `sizes` da largura real do card na linha", () => {
+    render(<VideoGallery videos={VIDEOS} />);
+    const img = screen.getByRole("button", { name: "Reproduzir vídeo: Foi Deus" }).closest("li")!.querySelector("img")!;
+    expect(img.getAttribute("sizes")).toBe("(max-width: 767px) 100vw, (max-width: 1140px) 49vw, 530px");
   });
 
   it("nenhum player é carregado antes do play", () => {
@@ -94,40 +120,6 @@ describe("VideoGallery", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reproduzir vídeo: Bastidores" }));
     fireEvent.ended(container.querySelector("video[controls]")!);
     expect(players(container)).toHaveLength(0);
-  });
-
-  it("highlights marca os destaques do celular com a ordem pedida; os outros ficam sem marca", () => {
-    const { container } = render(<VideoGallery videos={VIDEOS} highlights={["v1", "h1", "h2"]} />);
-    const gallery = container.firstElementChild as HTMLElement;
-    const marked = [...container.querySelectorAll<HTMLElement>("[data-highlight]")].map((li) => [
-      li.querySelector("h3")!.textContent,
-      li.style.getPropertyValue("--highlight-order"),
-    ]);
-
-    expect(gallery.hasAttribute("data-highlights")).toBe(true);
-    expect(marked).toEqual([
-      ["Foi Deus", "1"],
-      ["Amigo", "2"],
-      ["Bastidores", "0"],
-    ]);
-    // todos continuam no DOM (tablet/desktop mostram a lista inteira)
-    expect(container.querySelectorAll("li")).toHaveLength(VIDEOS.length);
-  });
-
-  it("completeRowsOnly marca a galeria (o CSS esconde a linha de sobras no tablet/desktop)", () => {
-    const extra: GalleryVideo = { id: "v3", type: "video", sourceType: "local", orientation: "portrait", title: "Sobra" };
-    const { container } = render(<VideoGallery videos={[...VIDEOS, extra]} completeRowsOnly />);
-    const gallery = container.firstElementChild as HTMLElement;
-
-    expect(gallery.hasAttribute("data-complete-rows")).toBe(true);
-    expect([...gallery.children].map((row) => row.getAttribute("data-template"))).toEqual(["pair", "feature", "rest"]);
-    expect(gallery.querySelector('[data-template="rest"]')!.textContent).toContain("Sobra");
-  });
-
-  it("sem highlights nenhum card é marcado", () => {
-    const { container } = render(<VideoGallery videos={VIDEOS} />);
-    expect((container.firstElementChild as HTMLElement).hasAttribute("data-highlights")).toBe(false);
-    expect(container.querySelectorAll("[data-highlight]")).toHaveLength(0);
   });
 
   it("com onPlay o play é delegado (modal/lightbox) e o card não toca", () => {

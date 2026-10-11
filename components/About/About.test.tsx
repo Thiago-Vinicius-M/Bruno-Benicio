@@ -29,12 +29,12 @@ describe("About — carrossel", () => {
   it("arrastar para a esquerda avança, para a direita volta; para nas pontas", () => {
     render(<About />);
     swipe(-80);
-    expect(activeText()).toContain("Bruno (Descrição)");
+    expect(activeText()).toContain(ABOUT_SLIDES[1].text.trim());
     expect(current()).toBe("o * o");
 
     swipe(-80);
     expect(current()).toBe("o o *");
-    expect(activeText()).toContain("Benício (Descrição)");
+    expect(activeText()).toContain(ABOUT_SLIDES[2].text.trim());
 
     swipe(-80);
     expect(current()).toBe("o o *");

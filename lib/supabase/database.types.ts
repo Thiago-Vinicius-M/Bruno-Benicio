@@ -57,15 +57,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "profiles_deactivated_by_fkey"
+            columns: ["deactivated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "profiles_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      sellers: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          updated_at: string
+          updated_by: string | null
+          whatsapp: string
+        }
+        Insert: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          updated_by?: string | null
+          whatsapp: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          updated_by?: string | null
+          whatsapp?: string
+        }
+        Relationships: [
           {
-            foreignKeyName: "profiles_deactivated_by_fkey"
-            columns: ["deactivated_by"]
+            foreignKeyName: "sellers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sellers_updated_by_fkey"
+            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -123,6 +174,63 @@ export type Database = {
           },
           {
             foreignKeyName: "show_financial_entries_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      show_models: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          description: string | null
+          duration: string
+          id: string
+          name: string
+          position: number
+          price: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration: string
+          id?: string
+          name: string
+          position?: number
+          price: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration?: string
+          id?: string
+          name?: string
+          position?: number
+          price?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "show_models_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "show_models_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -194,16 +302,114 @@ export type Database = {
           },
         ]
       }
+      video_settings: {
+        Row: {
+          home_limit_desktop: number
+          home_limit_mobile: number
+          id: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          home_limit_desktop?: number
+          home_limit_mobile?: number
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          home_limit_desktop?: number
+          home_limit_mobile?: number
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      videos: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          orientation: Database["public"]["Enums"]["video_orientation"]
+          placement: Database["public"]["Enums"]["video_placement"]
+          position: number
+          poster: string | null
+          source: string
+          source_type: Database["public"]["Enums"]["video_source"]
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          orientation: Database["public"]["Enums"]["video_orientation"]
+          placement?: Database["public"]["Enums"]["video_placement"]
+          position?: number
+          poster?: string | null
+          source: string
+          source_type: Database["public"]["Enums"]["video_source"]
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          orientation?: Database["public"]["Enums"]["video_orientation"]
+          placement?: Database["public"]["Enums"]["video_placement"]
+          position?: number
+          poster?: string | null
+          source?: string
+          source_type?: Database["public"]["Enums"]["video_source"]
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "videos_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      get_team_names: {
-        Args: never
+      get_commercial_show_models: {
+        Args: { p_code: string }
         Returns: {
+          description: string
+          duration: string
           id: string
           name: string
+          price: number
         }[]
       }
       get_financial_report: {
@@ -228,10 +434,64 @@ export type Database = {
           venue_name: string
         }[]
       }
+      get_public_show_models: {
+        Args: never
+        Returns: {
+          description: string
+          duration: string
+          id: string
+          name: string
+        }[]
+      }
+      get_public_video_settings: {
+        Args: never
+        Returns: {
+          home_limit_desktop: number
+          home_limit_mobile: number
+        }[]
+      }
+      get_public_videos: {
+        Args: never
+        Returns: {
+          id: string
+          orientation: Database["public"]["Enums"]["video_orientation"]
+          placement: Database["public"]["Enums"]["video_placement"]
+          poster: string
+          source: string
+          source_type: Database["public"]["Enums"]["video_source"]
+          title: string
+        }[]
+      }
+      get_seller_link: {
+        Args: { p_code: string }
+        Returns: {
+          active: boolean
+          whatsapp: string
+        }[]
+      }
+      get_team_names: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+        }[]
+      }
+      move_show_model: {
+        Args: { p_direction: string; p_id: string }
+        Returns: undefined
+      }
+      move_video: {
+        Args: { p_direction: string; p_id: string }
+        Returns: undefined
+      }
+      set_main_video: { Args: { p_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "ADMIN" | "EDITOR"
       financial_entry_type: "CACHE" | "OTHER_REVENUE" | "EXPENSE"
+      video_orientation: "landscape" | "portrait"
+      video_placement: "main" | "secondary" | "gallery"
+      video_source: "youtube" | "local"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -361,6 +621,9 @@ export const Constants = {
     Enums: {
       app_role: ["ADMIN", "EDITOR"],
       financial_entry_type: ["CACHE", "OTHER_REVENUE", "EXPENSE"],
+      video_orientation: ["landscape", "portrait"],
+      video_placement: ["main", "secondary", "gallery"],
+      video_source: ["youtube", "local"],
     },
   },
 } as const

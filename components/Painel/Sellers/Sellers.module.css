@@ -1,0 +1,108 @@
+/*
+ * Linha de vendedor. Lista, ações e estados vêm de Agenda.module.css (que posiciona
+ * .actions pela área "actions"); selo do link de Users.module.css.
+ * Desktop: identidade · link · ações. Tablet: link na segunda linha. Celular: empilhado.
+ */
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) auto;
+  grid-template-areas: "identity link actions";
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+}
+
+.row + .row {
+  border-block-start: 1px solid var(--panel-line);
+}
+
+.row[aria-busy] {
+  opacity: 0.6;
+}
+
+.row[data-inactive] .name,
+.row[data-inactive] .linkInput {
+  color: var(--panel-muted);
+}
+
+.identity {
+  grid-area: identity;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-weight: var(--weight-medium);
+  overflow-wrap: anywhere;
+}
+
+.link {
+  grid-area: link;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.link > button {
+  flex: none;
+  white-space: nowrap;
+}
+
+.linkInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--panel-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+@media (max-width: 1023px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "identity actions"
+      "link link";
+  }
+}
+
+@media (max-width: 639px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "identity"
+      "link"
+      "actions";
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .link {
+    flex-wrap: wrap;
+  }
+
+  .linkInput {
+    flex-basis: 100%;
+  }
+
+  .link > button {
+    flex: 1 1 auto;
+  }
+
+  .actions {
+    justify-content: flex-start;
+  }
+
+  .actions > * {
+    flex: 1 1 auto;
+  }
+}

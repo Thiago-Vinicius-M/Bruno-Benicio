@@ -5,7 +5,9 @@ import { useGSAP } from "@/animations/gsap";
 import { createCinematicTimeline, scrollToCinematicEnd } from "@/animations/cinematicTimeline";
 import { MoreButton } from "@/components/Experience/MoreButton";
 import { VideoGallery } from "@/components/VideoGallery/VideoGallery";
-import { VIDEO_HIGHLIGHTS, VIDEOS } from "./videoList";
+import type { GalleryVideo } from "@/components/VideoGallery/types";
+import { splitHomeVideos } from "@/lib/videos/gallery";
+import { useVideoCollection } from "./videosContext";
 import { VIDEOS_CINEMATIC } from "./videosCinematic";
 import styles from "./Videos.module.css";
 
@@ -16,7 +18,43 @@ function headerHeight() {
   return parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-height")) || 0;
 }
 
+/**
+ * Seção VIDEOS da Home (painel → Vídeos): o principal (se houver) e os secundários, até o
+ * limite de cada dispositivo (lib/videos/gallery.ts). O HTML traz o maior dos dois
+ * limites e o CSS esconde o excedente de cada layout, então servidor e navegador renderizam
+ * o mesmo (sem divergência de hidratação) e a troca acompanha redimensionar/girar a tela.
+ * O "Ver mais" abre a galeria com o restante e só aparece no layout em que sobra algum.
+ * Sem vídeos ativos, a seção não aparece.
+ */
 export function Videos() {
+  const collection = useVideoCollection();
+  const desktop = splitHomeVideos(collection, collection.limits.desktop);
+  const mobile = splitHomeVideos(collection, collection.limits.mobile);
+  // Os dois são prefixos da mesma lista: o maior contém o menor.
+  const home = desktop.home.length >= mobile.home.length ? desktop.home : mobile.home;
+  if (!home.length && !desktop.more.length) return null;
+
+  return (
+    <VideosSection
+      videos={home}
+      desktopCount={desktop.home.length}
+      mobileCount={mobile.home.length}
+      leadId={collection.main?.id}
+      more={{ desktop: desktop.more.length > 0, mobile: mobile.more.length > 0 }}
+    />
+  );
+}
+
+type VideosSectionProps = {
+  videos: GalleryVideo[];
+  desktopCount: number;
+  mobileCount: number;
+  leadId?: string;
+  /** Há vídeos para o "Ver mais" em cada layout? */
+  more: { desktop: boolean; mobile: boolean };
+};
+
+function VideosSection({ videos, desktopCount, mobileCount, leadId, more }: VideosSectionProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLParagraphElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -77,16 +115,23 @@ export function Videos() {
         </h2>
         <VideoGallery
           ref={galleryRef}
-          videos={VIDEOS}
-          highlights={VIDEO_HIGHLIGHTS}
-          completeRowsOnly
+          videos={videos}
+          desktopCount={desktopCount}
+          mobileCount={mobileCount}
+          leadId={leadId}
           className={styles.gallery}
         />
       </div>
-      {/* A Home mostra uma seleção (celular: destaques · desktop: linhas completas); a galeria completa abre numa subtela. */}
-      <div className={`container-narrow ${styles.more}`}>
-        <MoreButton experience="videos" />
-      </div>
+      {/* A Home mostra o principal e os secundários; os demais vídeos abrem numa subtela. */}
+      {(more.desktop || more.mobile) && (
+        <div
+          className={`container-narrow ${styles.more}`}
+          data-hide-desktop={!more.desktop || undefined}
+          data-hide-mobile={!more.mobile || undefined}
+        >
+          <MoreButton experience="videos" />
+        </div>
+      )}
     </section>
   );
 }

@@ -6,8 +6,14 @@ const nextConfig: NextConfig = {
     root: __dirname,
   },
   images: {
-    // Thumbnails automáticas dos vídeos do YouTube (seção VIDEOS).
-    remotePatterns: [new URL("https://i.ytimg.com/vi/**")],
+    remotePatterns: [
+      // Thumbnails automáticas dos vídeos do YouTube (seção VIDEOS).
+      new URL("https://i.ytimg.com/vi/**"),
+      // Pôsteres enviados pelo painel (bucket público "videos" do Supabase Storage).
+      ...(process.env.NEXT_PUBLIC_SUPABASE_URL
+        ? [new URL("/storage/v1/object/public/videos/**", process.env.NEXT_PUBLIC_SUPABASE_URL)]
+        : []),
+    ],
   },
   poweredByHeader: false,
   async headers() {

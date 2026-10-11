@@ -3,15 +3,19 @@
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import type { GalleryVideo } from "./types";
-import { canPlay, resolveThumbnail, VideoPlayer } from "./videoSources";
+import { canPlay, isOptimizableImage, resolveThumbnail, VideoPlayer } from "./videoSources";
 import styles from "./VideoGallery.module.css";
 
 type VideoGalleryItemProps = {
   video: GalleryVideo;
-  /** posição no template da linha (o CSS usa para a área do grid) */
-  slot: number;
-  /** posição entre os destaques do celular (prop highlights da galeria); -1/sem valor = não é destaque */
-  highlight?: number;
+  /** metade de uma pilha (dois horizontais um em cima do outro): ocupa a altura que sobrar */
+  stacked?: boolean;
+  /** coluna/linha no grid da linha (--col, --row), definidas pela galeria */
+  gridStyle?: CSSProperties;
+  /** `sizes` da thumbnail (largura do card na linha) */
+  sizes: string;
+  /** fora do limite da Home no celular: some só no celular (CSS) */
+  mobileHidden?: boolean;
   playing: boolean;
   onPlay: () => void;
   onStop: () => void;
@@ -30,21 +34,28 @@ const ORIENTATION_LABEL = {
  *   play    → botão que cobre o card inteiro (clique em qualquer ponto, foco via teclado)
  * Tocando, as camadas dão lugar ao player da fonte do vídeo.
  */
-export function VideoGalleryItem({ video, slot, highlight = -1, playing, onPlay, onStop }: VideoGalleryItemProps) {
+export function VideoGalleryItem({
+  video,
+  stacked,
+  gridStyle,
+  sizes,
+  mobileHidden,
+  playing,
+  onPlay,
+  onStop,
+}: VideoGalleryItemProps) {
   const playable = canPlay(video);
   const thumbnail = resolveThumbnail(video);
   const poster = typeof thumbnail === "string" ? thumbnail : thumbnail?.src;
-  const highlighted = highlight >= 0;
 
   return (
     <li
       className={styles.item}
-      data-slot={slot}
       data-orientation={video.orientation}
+      data-stacked={stacked || undefined}
       data-playable={playable}
-      data-highlight={highlighted ? highlight : undefined}
-      // ordem entre os destaques — só usada no celular (VideoGallery.module.css)
-      style={highlighted ? ({ "--highlight-order": highlight } as CSSProperties) : undefined}
+      data-mobile-hidden={mobileHidden || undefined}
+      style={gridStyle}
       data-reveal="video"
     >
       {playing && playable ? (
@@ -57,7 +68,9 @@ export function VideoGalleryItem({ video, slot, highlight = -1, playing, onPlay,
                 src={thumbnail}
                 alt=""
                 fill
-                sizes={video.orientation === "portrait" ? "(max-width: 767px) 100vw, 30vw" : "(max-width: 767px) 100vw, 50vw"}
+                sizes={sizes}
+                // Pôster em outro domínio (link colado no painel): exibido como está, sem otimização.
+                unoptimized={!isOptimizableImage(thumbnail)}
                 className={styles.thumbnail}
               />
             ) : playable && video.sourceType === "local" ? (

@@ -1,0 +1,82 @@
+/* Link comercial inválido — mesmos tokens do site (globals.css) e o botão do "Ver mais". */
+.page {
+  display: grid;
+  min-height: 100svh;
+  align-items: center;
+  padding-block: var(--space-2xl);
+}
+
+.stage {
+  display: grid;
+  justify-items: center;
+  row-gap: var(--space-3xs);
+  text-align: center;
+}
+
+.eyebrow {
+  color: var(--color-accent);
+  text-transform: uppercase;
+}
+
+.text {
+  max-width: 36rem;
+  color: var(--color-foreground-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3xs) var(--space-xs);
+  margin-block-start: var(--space-2xs);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 28px;
+  font-size: var(--text-nav);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-nav);
+  text-transform: uppercase;
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+.link {
+  font-size: var(--text-nav);
+  letter-spacing: var(--tracking-nav);
+  text-transform: uppercase;
+  color: var(--color-foreground-muted);
+  transition: color 0.25s ease;
+}
+
+.button:focus-visible,
+.link:focus-visible {
+  outline: 2px solid var(--color-foreground);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .button:hover {
+    background: var(--color-accent);
+    color: var(--color-background);
+  }
+
+  .link:hover {
+    color: var(--color-accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .link {
+    transition: none;
+  }
+}

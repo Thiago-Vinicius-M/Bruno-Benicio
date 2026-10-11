@@ -12,6 +12,10 @@ export type PanelNavItem = {
 const NAV_ITEMS: PanelNavItem[] = [
   { label: "Início", href: PANEL_ROUTES.home },
   { label: "Agenda", href: PANEL_ROUTES.agenda },
+  { label: "Vídeos", href: PANEL_ROUTES.videos },
+  // Preços e telefones comerciais: mesma regra de Usuários e Financeiro (só ADMIN).
+  { label: "Modelos de Show", href: PANEL_ROUTES.showModels, roles: ["ADMIN"] },
+  { label: "Vendedores", href: PANEL_ROUTES.sellers, roles: ["ADMIN"] },
   { label: "Financeiro", roles: ["ADMIN"] },
   { label: "Usuários", href: PANEL_ROUTES.users, roles: ["ADMIN"] },
   { label: "Configurações", href: PANEL_ROUTES.changePassword },

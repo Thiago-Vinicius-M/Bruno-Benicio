@@ -5,6 +5,10 @@
  *   Desktop/tablet → formatos em lista (nome à esquerda, preço à direita); repertório e
  *                    estrutura lado a lado
  *   Celular        → tudo empilhado; o preço fica abaixo do nome
+ *
+ * Versão pública: sem preço (o servidor nem envia). Quem chegou pelo link de um vendedor
+ * vê o preço, um rádio em cada formato, data/horário opcionais e o botão "Voltar ao
+ * WhatsApp" abaixo da lista; o formato escolhido fica destacado em dourado.
  */
 .show {
   --show-line: rgb(255 195 66 / 0.14); /* divisórias (a mesma cor das da MÚSICAS) */
@@ -70,6 +74,212 @@
   white-space: nowrap;
 }
 
+.description {
+  font-size: var(--text-nav);
+  color: var(--color-foreground-muted);
+}
+
+.unavailable {
+  padding-block: var(--space-2xs);
+  text-align: center;
+  color: var(--color-foreground-muted);
+  border-block: 1px solid var(--show-line);
+}
+
+/* ---------- Escolha do formato (só para quem chegou pelo link de um vendedor) ---------- */
+
+.choice {
+  display: grid;
+  row-gap: var(--space-sm);
+}
+
+.package {
+  position: relative;
+}
+
+.package[data-selectable] {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+}
+
+/* O label não gera caixa: rádio, nome e preço continuam sendo colunas do grid da linha. */
+.option {
+  display: contents;
+  cursor: pointer;
+}
+
+.radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.radioMark {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--color-foreground-muted);
+  border-radius: 50%;
+  transition: border-color 0.25s ease;
+}
+
+.radioMark::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  transform: scale(0);
+  transition: transform 0.2s ease;
+}
+
+.package[data-selected] {
+  background: rgb(255 195 66 / 0.08);
+}
+
+.package[data-selected] .radioMark {
+  border-color: var(--color-accent);
+}
+
+.package[data-selected] .radioMark::after {
+  transform: scale(1);
+}
+
+.package[data-selected] .packageName {
+  color: var(--color-accent);
+}
+
+.package:has(.radio:focus-visible) {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+@media (hover: hover) {
+  .package[data-selectable]:not([data-selected]):hover {
+    background: rgb(255 255 255 / 0.04);
+  }
+}
+
+.whatsapp {
+  display: grid;
+  justify-items: center;
+  row-gap: var(--space-3xs);
+  text-align: center;
+}
+
+/* Data e horário do evento (opcionais): campos nativos com as cores do site. */
+.schedule {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 12rem));
+  justify-content: center;
+  gap: var(--space-3xs) var(--space-xs);
+  min-width: 0;
+  margin: 0 0 var(--space-3xs);
+  padding: 0;
+  border: 0;
+}
+
+.scheduleLegend {
+  grid-column: 1 / -1;
+  margin-block-end: var(--space-3xs);
+  padding: 0;
+  color: var(--color-foreground-muted);
+  text-transform: uppercase;
+}
+
+.scheduleField {
+  display: grid;
+  row-gap: 6px;
+  text-align: start;
+}
+
+.scheduleLabel {
+  font-size: var(--text-nav);
+  letter-spacing: var(--tracking-nav);
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.scheduleInput {
+  min-height: 48px;
+  padding: 0 14px;
+  font: inherit;
+  color: var(--color-foreground);
+  color-scheme: dark; /* calendário/relógio nativos no tema escuro */
+  background: transparent;
+  border: 1px solid var(--show-line);
+  border-radius: 0;
+}
+
+.scheduleInput:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Mesmo botão do "Ver mais" (Experience.module.css). */
+.whatsappButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 28px;
+  font-family: var(--font-body);
+  font-size: var(--text-nav);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-nav);
+  text-transform: uppercase;
+  color: var(--color-accent);
+  background: transparent;
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.whatsappButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.whatsappButton:focus-visible {
+  outline: 2px solid var(--color-foreground);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .whatsappButton:not(:disabled):hover {
+    background: var(--color-accent);
+    color: var(--color-background);
+  }
+}
+
+.whatsappStatus {
+  max-width: 36rem;
+  font-size: var(--text-nav);
+  color: var(--color-foreground-muted);
+}
+
+.whatsappStatus[data-tone="error"] {
+  color: var(--color-foreground);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* ---------- Repertório e estrutura ---------- */
 
 .details {
@@ -109,8 +319,40 @@
     font-size: var(--text-caption);
   }
 
+  /* Com a escolha: rádio à esquerda, nome e preço empilhados ao lado. */
+  .package[data-selectable] {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .package[data-selectable] .radioMark {
+    grid-row: 1 / span 2;
+  }
+
+  .package[data-selectable] .price {
+    grid-column: 2;
+  }
+
+  .whatsapp,
+  .whatsappButton {
+    width: 100%;
+  }
+
+  .schedule {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    width: 100%;
+  }
+
   .details {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .package[data-selectable],
+  .radioMark,
+  .radioMark::after,
+  .whatsappButton {
+    transition: none;
   }
 }
 

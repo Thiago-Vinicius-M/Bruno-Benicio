@@ -37,6 +37,19 @@
   margin-block-start: var(--space-md);
 }
 
+/* "Ver mais" só no layout em que sobram vídeos (limites diferentes por dispositivo). */
+@media (max-width: 767px) {
+  .more[data-hide-mobile] {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .more[data-hide-desktop] {
+    display: none;
+  }
+}
+
 .closing {
   margin-block-start: var(--space-sm);
 }

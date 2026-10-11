@@ -56,7 +56,7 @@ const AUTH_ERRORS: Record<string, { code: AgendaErrorCode; message?: string }> =
 };
 
 /** Códigos SQLSTATE próprios definidos na migration (mensagem do banco já em pt-BR). */
-const APP_SQLSTATES = new Set(["AG001", "AG002", "AG003", "AG004"]);
+const APP_SQLSTATES = new Set(["AG001", "AG002", "AG003", "AG004", "AG005", "AG006"]);
 
 type PostgrestLikeError = { code?: string; message?: string };
 

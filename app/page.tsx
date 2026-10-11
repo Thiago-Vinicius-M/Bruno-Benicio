@@ -10,28 +10,42 @@ import { Models } from "@/components/Models/Models";
 import { Music } from "@/components/Music/Music";
 import { Show } from "@/components/Show/Show";
 import { Videos } from "@/components/Videos/Videos";
+import { VideosProvider } from "@/components/Videos/videosContext";
+import { loadShowModels } from "@/lib/showModels/publicShowModels";
+import { loadVideoCollection } from "@/lib/videos/publicVideos";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-export default function Home() {
+/*
+ * Página estática, regenerada quando o painel altera os vídeos ou os modelos de show
+ * (revalidatePath("/") nas Server Actions). O intervalo é só uma rede de segurança para
+ * mudanças feitas fora do painel.
+ */
+export const revalidate = 3600;
+
+export default async function Home() {
+  const [videos, showModels] = await Promise.all([loadVideoCollection(), loadShowModels()]);
+
   return (
-    <ExperienceProvider>
-      <Loader />
-      {/* data-experience-home: o que sai de cena quando uma subtela ("Ver mais") abre */}
-      <Header />
-      <main data-experience-home>
-        <Hero />
-        <Marquee />
-        <About />
-        <Videos />
-        <Music />
-        <Marquee />
-        <Models />
-        <Show />
-        <Contact />
-      </main>
-    </ExperienceProvider>
+    <VideosProvider videos={videos}>
+      <ExperienceProvider>
+        <Loader />
+        {/* data-experience-home: o que sai de cena quando uma subtela ("Ver mais") abre */}
+        <Header />
+        <main data-experience-home>
+          <Hero />
+          <Marquee />
+          <About />
+          <Videos />
+          <Music />
+          <Marquee />
+          <Models />
+          <Show models={showModels} />
+          <Contact />
+        </main>
+      </ExperienceProvider>
+    </VideosProvider>
   );
 }

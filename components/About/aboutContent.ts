@@ -27,7 +27,7 @@ export const ABOUT_SLIDES: AboutSlide[] = [
   {
     id: "bruno",
     name: "Bruno",
-    text: "Bruno (Descrição)",
+    text: "Olá, meu nome é Bruno,  cantor e compositor, natural de Cubatão - SP Morando em Goiânia desde 11 anos, fui cativado pela música sertaneja e pela essência do nosso modão, descobri desde cedo que minha maior paixão, era fazer as pessoas felizes quando cantava. Isso que me motiva a seguir meu sonho desde então. ",
     image: fotoBruno,
     alt: "Bruno sorrindo",
   },

@@ -12,9 +12,14 @@ import { PANEL_ROUTES } from "./routes";
  * da requisição ficam só como fallback (desenvolvimento local).
  */
 export async function authCallbackUrl(next: string): Promise<string> {
-  const url = new URL(PANEL_ROUTES.authConfirm, getSiteUrl() ?? (await requestOrigin()));
+  const url = new URL(PANEL_ROUTES.authConfirm, await publicSiteOrigin());
   url.searchParams.set("next", next);
   return url.toString();
+}
+
+/** Origem pública do site (mesma regra acima). Também monta os links comerciais dos vendedores. */
+export async function publicSiteOrigin(): Promise<string> {
+  return getSiteUrl()?.origin ?? (await requestOrigin());
 }
 
 async function requestOrigin(): Promise<string> {

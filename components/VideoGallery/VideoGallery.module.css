@@ -1,25 +1,30 @@
 /*
- * Galeria de vídeos — cada linha (.row) é um grid próprio, posicionado pelo template
- * (data-template) e pela posição do card no template (data-slot).
+ * Galeria de vídeos — as linhas e a posição de cada card vêm de galleryLayout.ts, por
+ * variáveis no HTML:
+ *   linha (.row) → --row-columns  colunas proporcionais ao formato de cada card
+ *                  --row-aspect   soma das proporções (largura ÷ altura da linha)
+ *                  --row-gaps     número de espaços entre colunas
+ *   card (.item) → --col / --row  coluna e linha no grid da linha
  *
- *   Desktop (≥ 1024px)
- *     pair    → [ 16:9 ][ 16:9 ]
- *     feature → [ 9:16 ][ 16:9 / 16:9 empilhados ][ 9:16 ]   colunas 3fr · 4fr · 3fr
- *               A altura sai dos verticais (9:16); os dois do meio dividem essa altura
- *               e ficam por volta de 3:2.
- *   Tablet (768–1023)
- *     feature → [ 9:16 ][ 9:16 ] em cima, [ 16:9 ][ 16:9 ] embaixo
+ *   Tablet e desktop (≥ 768px)
+ *     Todos os cards de uma linha têm a mesma altura e a linha fecha a largura inteira.
+ *     Pilha (data-stacked): dois horizontais um em cima do outro numa coluna; dividem a
+ *     altura da linha. Linhas que ficariam altas demais (ex.: só verticais) param em
+ *     --gallery-row-max de altura, ficam mais estreitas e centralizadas.
  *   Celular (≤ 767px)
- *     uma coluna, na ordem dos dados: H · H · V · H · H · V
- *     com `highlights`: só os destaques, na ordem deles (ex.: V · H · H)
+ *     uma coluna, na ordem da lista; verticais até --gallery-portrait-max de altura.
  *
- * Verticais nunca passam de --gallery-portrait-max de altura fora do desktop (ficam
- * mais estreitos e centralizados). Ajustes visuais rápidos ficam nas variáveis de .gallery.
+ *   Home com limites diferentes por dispositivo: o HTML traz o maior dos dois e o que
+ *   passa do limite de cada um some aqui (data-mobile-hidden / data-desktop-hidden). Mesmo
+ *   breakpoint de MEDIA.isMobile (animations/media.ts), usado pelo "Ver mais".
+ *
+ * Ajustes visuais rápidos ficam nas variáveis de .gallery.
  */
 .gallery {
-  --gallery-gap: clamp(12px, 1.6vw, 24px);
+  --gallery-gap: clamp(12px, 1.85vw, 20px); /* ≈ LAYOUT.gap de galleryLayout.ts */
   --gallery-radius: 0px; /* cantos retos, como os demais vídeos do site */
-  --gallery-portrait-max: 78svh;
+  --gallery-row-max: min(72svh, 540px); /* ≈ LAYOUT.maxRowHeight · 1080px */
+  --gallery-portrait-max: 72svh;
   --gallery-surface: #0d0f12;
   --gallery-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -32,37 +37,26 @@
   gap: var(--gallery-gap);
 }
 
-.row[data-template="pair"] {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
+@media (min-width: 768px) {
+  .row {
+    grid-template-columns: var(--row-columns);
+    /* altura da linha = (largura − espaços) ÷ --row-aspect; acima do teto, a linha encolhe */
+    /* --row-scale < 1: linha de secundários abaixo de um principal horizontal (teto menor) */
+    width: min(
+      100%,
+      calc(var(--gallery-row-max) * var(--row-scale, 1) * var(--row-aspect) + var(--row-gaps) * var(--gallery-gap))
+    );
+    margin-inline: auto;
+  }
 
-.row[data-template="feature"] {
-  grid-template-columns: minmax(0, 3fr) minmax(0, 4fr) minmax(0, 3fr);
-  grid-template-areas:
-    "start top end"
-    "start bottom end";
-}
+  .row[data-stacked] {
+    grid-template-rows: 1fr 1fr;
+  }
 
-.row[data-template="feature"] > [data-slot="0"] {
-  grid-area: start;
-}
-
-.row[data-template="feature"] > [data-slot="1"] {
-  grid-area: top;
-}
-
-.row[data-template="feature"] > [data-slot="2"] {
-  grid-area: bottom;
-}
-
-.row[data-template="feature"] > [data-slot="3"] {
-  grid-area: end;
-}
-
-/* Sobras que não completam um template: grade simples, cada card na sua proporção. */
-.row[data-template="rest"] {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-  align-items: start;
+  .row > .item {
+    grid-column: var(--col);
+    grid-row: var(--row);
+  }
 }
 
 /* ---------- Card ---------- */
@@ -84,10 +78,11 @@
   aspect-ratio: 9 / 16;
 }
 
-/* Desktop: os dois do meio não têm proporção própria — dividem a altura dos verticais. */
-.row[data-template="feature"] > [data-slot="1"],
-.row[data-template="feature"] > [data-slot="2"] {
-  aspect-ratio: auto;
+/* Tablet/desktop: metade de pilha não tem proporção própria — divide a altura da linha. */
+@media (min-width: 768px) {
+  .item[data-stacked] {
+    aspect-ratio: auto;
+  }
 }
 
 .media {
@@ -281,70 +276,23 @@
   outline-offset: -2px;
 }
 
-/* Verticais fora do desktop (e nas sobras): nunca mais altos que a tela. */
-.row[data-template="rest"] > [data-orientation="portrait"] {
-  justify-self: center;
-  width: min(100%, calc(var(--gallery-portrait-max) * 9 / 16));
-}
+/* Celular: uma coluna, na ordem da lista; vertical nunca mais alto que a tela. */
+@media (max-width: 767px) {
+  .item[data-orientation="portrait"] {
+    justify-self: center;
+    width: min(100%, calc(var(--gallery-portrait-max) * 9 / 16));
+  }
 
-/* Tablet/desktop com completeRowsOnly: sem a linha de sobras (fica na galeria completa). */
-@media (min-width: 768px) {
-  .gallery[data-complete-rows] > .row[data-template="rest"] {
+  /* Além do limite de vídeos da Home no celular (vão para o "Ver mais"). */
+  .row[data-mobile-hidden],
+  .item[data-mobile-hidden] {
     display: none;
   }
 }
 
-/* Tablet: verticais lado a lado; horizontais lado a lado, cada um com sua proporção. */
-@media (max-width: 1023px) {
-  .row[data-template="feature"] {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-areas:
-      "start end"
-      "top bottom";
-    align-items: center;
-  }
-
-  .row[data-template="feature"] > [data-slot="1"],
-  .row[data-template="feature"] > [data-slot="2"] {
-    aspect-ratio: 16 / 9;
-  }
-
-  .row[data-template="feature"] > [data-orientation="portrait"] {
-    justify-self: center;
-    width: min(100%, calc(var(--gallery-portrait-max) * 9 / 16));
-  }
-}
-
-/* Celular: uma coluna, na ordem dos dados. */
-@media (max-width: 767px) {
-  .gallery {
-    --gallery-portrait-max: 72svh;
-  }
-
-  .row[data-template="pair"],
-  .row[data-template="feature"] {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: none;
-  }
-
-  .row[data-template="feature"] > [data-slot] {
-    grid-area: auto;
-  }
-
-  /*
-   * Com destaques (prop highlights): só eles aparecem, na ordem pedida. As linhas deixam de
-   * gerar caixa (display: contents) para os cards de linhas diferentes se ordenarem entre si
-   * dentro do grid da galeria — que já é uma coluna, com o mesmo espaçamento.
-   */
-  .gallery[data-highlights] > .row {
-    display: contents;
-  }
-
-  .gallery[data-highlights] .item {
-    order: var(--highlight-order);
-  }
-
-  .gallery[data-highlights] .item:not([data-highlight]) {
+/* Só no celular: limite da Home no celular maior que o do desktop. */
+@media (min-width: 768px) {
+  .row[data-desktop-hidden] {
     display: none;
   }
 }

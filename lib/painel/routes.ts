@@ -11,6 +11,12 @@ export const PANEL_ROUTES = {
   confirmLink: "/painel/confirmar",
   changePassword: "/painel/configuracoes/senha",
   agenda: "/painel/agenda",
+  /** Vídeos da Home e do "Ver mais". */
+  videos: "/painel/videos",
+  /** Formatos e preços da seção NOSSO SHOW. Exclusiva de ADMIN. */
+  showModels: "/painel/modelos",
+  /** Vendedores e seus links comerciais. Exclusiva de ADMIN. */
+  sellers: "/painel/vendedores",
   /** Exclusiva de ADMIN. */
   users: "/painel/usuarios",
   /** Callback do Supabase Auth (recuperação de senha e convites). */

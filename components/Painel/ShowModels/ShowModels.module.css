@@ -1,0 +1,106 @@
+/*
+ * Modelos de show do painel. Lista, ações e estados vêm de Agenda.module.css; número,
+ * botões de ordem e checkbox de Videos.module.css; selo Ativo/Inativo de Users.module.css.
+ * Aqui só o que é próprio desta lista.
+ */
+
+.header {
+  display: grid;
+  gap: 4px;
+  margin-block-end: 12px;
+}
+
+.header > h2 {
+  margin: 0;
+}
+
+/* <ol> (a ordem importa), sem o recuo e a numeração padrão do navegador. */
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto auto auto;
+  grid-template-areas: "number info price order actions";
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.item + .item {
+  border-block-start: 1px solid var(--panel-line);
+}
+
+.item[aria-busy] {
+  opacity: 0.6;
+}
+
+.item[data-inactive] .name,
+.item[data-inactive] .price {
+  color: var(--panel-muted);
+}
+
+.info {
+  grid-area: info;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-weight: var(--weight-medium);
+  overflow-wrap: anywhere;
+}
+
+.price {
+  grid-area: price;
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+.order {
+  grid-area: order;
+}
+
+/* Largura fixa: "Ativar"/"Desativar" não desalinham a coluna de preços entre as linhas. */
+.actions {
+  grid-area: actions;
+  justify-content: flex-end;
+  min-width: 11rem;
+}
+
+.textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+@media (max-width: 639px) {
+  .item {
+    grid-template-columns: 20px auto minmax(0, 1fr);
+    grid-template-areas:
+      "number info info"
+      "number price price"
+      "order order actions";
+    gap: 6px 10px;
+    padding: 12px;
+  }
+
+  .order {
+    margin-block-start: 6px;
+  }
+
+  .actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
+  }
+}

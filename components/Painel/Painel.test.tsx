@@ -25,7 +25,9 @@ describe("PanelShell", () => {
     expect(screen.getByText("Bruno")).toBeTruthy();
     expect(screen.getByText("Administrador")).toBeTruthy();
     const nav = within(screen.getByRole("navigation", { name: "Painel" }));
-    for (const label of ["Agenda", "Financeiro", "Usuários", "Configurações"]) expect(nav.getByText(label)).toBeTruthy();
+    for (const label of ["Agenda", "Modelos de Show", "Vendedores", "Financeiro", "Usuários", "Configurações"]) {
+      expect(nav.getByText(label)).toBeTruthy();
+    }
     expect(screen.getByRole("button", { name: "Sair" })).toBeTruthy();
     expect(screen.getByText("conteúdo")).toBeTruthy();
   });
@@ -40,6 +42,8 @@ describe("PanelShell", () => {
     const nav = within(screen.getByRole("navigation", { name: "Painel" }));
     expect(nav.queryByText("Financeiro")).toBeNull();
     expect(nav.queryByText("Usuários")).toBeNull();
+    expect(nav.queryByText("Modelos de Show")).toBeNull();
+    expect(nav.queryByText("Vendedores")).toBeNull();
     expect(nav.getByText("Agenda")).toBeTruthy();
   });
 
@@ -55,6 +59,8 @@ describe("PanelShell", () => {
     // Agenda e Usuários (ADMIN) já estão disponíveis.
     expect(screen.getByRole("link", { name: "Agenda" }).getAttribute("href")).toBe("/painel/agenda");
     expect(screen.getByRole("link", { name: "Usuários" }).getAttribute("href")).toBe("/painel/usuarios");
+    expect(screen.getByRole("link", { name: "Modelos de Show" }).getAttribute("href")).toBe("/painel/modelos");
+    expect(screen.getByRole("link", { name: "Vendedores" }).getAttribute("href")).toBe("/painel/vendedores");
   });
 
   it("menu mobile abre e fecha (inclusive com Esc)", () => {
@@ -73,10 +79,11 @@ describe("PanelShell", () => {
 
 describe("navegação", () => {
   it("marca o item ativo pela seção", () => {
-    const [home, , , , settings] = panelNavFor("ADMIN");
-    expect(isActiveNavItem(home, "/painel")).toBe(true);
-    expect(isActiveNavItem(home, "/painel/configuracoes/senha")).toBe(false);
-    expect(isActiveNavItem(settings, "/painel/configuracoes/senha")).toBe(true);
+    const item = (label: string) => panelNavFor("ADMIN").find((nav) => nav.label === label)!;
+    expect(isActiveNavItem(item("Início"), "/painel")).toBe(true);
+    expect(isActiveNavItem(item("Início"), "/painel/configuracoes/senha")).toBe(false);
+    expect(isActiveNavItem(item("Configurações"), "/painel/configuracoes/senha")).toBe(true);
+    expect(isActiveNavItem(item("Vídeos"), "/painel/videos")).toBe(true);
   });
 });
 

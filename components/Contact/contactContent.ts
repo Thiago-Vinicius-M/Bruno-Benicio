@@ -1,3 +1,5 @@
+import { whatsappUrl as buildWhatsAppUrl } from "@/lib/whatsapp";
+
 /**
  * Contato para contratar (seção CONTATO, Contact.tsx). Para mudar um número, a mensagem
  * do WhatsApp ou o Instagram, altere só aqui.
@@ -19,5 +21,5 @@ export const CONTACT_INSTAGRAM = {
 
 /** Link que abre a conversa no WhatsApp (app no celular, WhatsApp Web no computador). */
 export function whatsappUrl(number: string, message = WHATSAPP_MESSAGE) {
-  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+  return buildWhatsAppUrl(number, message);
 }

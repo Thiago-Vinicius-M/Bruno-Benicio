@@ -49,6 +49,17 @@ export function resolveThumbnail(video: GalleryVideo) {
   return video.source ? VIDEO_SOURCES[video.sourceType]?.thumbnail?.(video.source) : undefined;
 }
 
+/**
+ * A imagem pode passar pelo otimizador do next/image: arquivo do próprio site, thumbnail do
+ * YouTube ou upload do painel (Supabase Storage) — os domínios liberados em next.config.ts.
+ * Qualquer outro link é exibido como está (o otimizador recusaria o domínio).
+ */
+export function isOptimizableImage(src: string | { src: string }) {
+  if (typeof src !== "string" || src.startsWith("/")) return true;
+  const storage = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  return src.startsWith("https://i.ytimg.com/vi/") || Boolean(storage && src.startsWith(`${storage}/storage/v1/object/public/videos/`));
+}
+
 /** Renderiza o player registrado para a fonte do vídeo (nada, se não houver). */
 export function VideoPlayer(props: VideoPlayerProps) {
   const Player = VIDEO_SOURCES[props.video.sourceType]?.Player;

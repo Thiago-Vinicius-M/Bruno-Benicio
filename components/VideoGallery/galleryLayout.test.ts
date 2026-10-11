@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildGalleryRows } from "./galleryLayout";
+import { buildGalleryRows, buildLeadRows, LAYOUT, rowGeometry, unitVideos, type GalleryRow } from "./galleryLayout";
 import type { GalleryVideo, VideoOrientation } from "./types";
 
 const video = (id: string, orientation: VideoOrientation): GalleryVideo => ({
@@ -10,57 +10,141 @@ const video = (id: string, orientation: VideoOrientation): GalleryVideo => ({
   title: id,
 });
 
-const L = (id: string) => video(id, "landscape");
-const P = (id: string) => video(id, "portrait");
+/** "LLP" → horizontal, horizontal, vertical (ids L0, L1, P2). */
+const sequence = (pattern: string) =>
+  [...pattern].map((char, index) => video(`${char}${index}`, char === "L" ? "landscape" : "portrait"));
 
-const ids = (rows: ReturnType<typeof buildGalleryRows>) =>
-  rows.map((row) => [row.template, row.videos.map((v) => v.id)]);
+/** Linhas em texto: "L L | (L/L) P P". */
+const describeRows = (rows: GalleryRow[]) =>
+  rows
+    .map((row) =>
+      row.units
+        .map((unit) => (unit.kind === "stack" ? "(L/L)" : unit.video.orientation === "landscape" ? "L" : "P"))
+        .join(" "),
+    )
+    .join(" | ");
+
+const layout = (pattern: string) => describeRows(buildGalleryRows(sequence(pattern)));
+
+/** Todas as combinações de horizontais/verticais com até `max` vídeos. */
+function* allSequences(max: number) {
+  for (let n = 1; n <= max; n++) {
+    for (let mask = 0; mask < 1 << n; mask++) {
+      yield Array.from({ length: n }, (_, i) => ((mask >> i) & 1 ? "P" : "L")).join("");
+    }
+  }
+}
 
 describe("buildGalleryRows", () => {
-  it("4 horizontais + 2 verticais formam pair + feature", () => {
-    const rows = buildGalleryRows([L("h1"), L("h2"), P("v1"), L("h3"), L("h4"), P("v2")]);
-    expect(ids(rows)).toEqual([
-      ["pair", ["h1", "h2"]],
-      ["feature", ["v1", "h3", "h4", "v2"]],
-    ]);
-  });
-
-  it("cada orientação preenche suas posições na ordem da lista, independente da mistura", () => {
-    const rows = buildGalleryRows([P("v1"), P("v2"), L("h1"), L("h2"), L("h3"), L("h4")]);
-    expect(ids(rows)).toEqual([
-      ["pair", ["h1", "h2"]],
-      ["feature", ["v1", "h3", "h4", "v2"]],
-    ]);
-  });
-
-  it("o padrão repete enquanto houver vídeos", () => {
-    const rows = buildGalleryRows([
-      ...["a", "b", "c", "d", "e", "f", "g", "h"].map(L),
-      ...["v1", "v2", "v3", "v4"].map(P),
-    ]);
-    expect(rows.map((row) => row.template)).toEqual(["pair", "feature", "pair", "feature"]);
-  });
-
-  it("template sem vídeos suficientes é pulado; sobras vão para 'rest' na ordem original", () => {
-    const rows = buildGalleryRows([L("h1"), P("v1"), L("h2"), L("h3"), P("v2")]);
-    // pair usa h1,h2; feature precisa de 2 horizontais (só há h3); pair precisa de 2.
-    expect(ids(rows)).toEqual([
-      ["pair", ["h1", "h2"]],
-      ["rest", ["v1", "h3", "v2"]],
-    ]);
-  });
-
-  it("só horizontais: vários pairs, sem vazios", () => {
-    expect(ids(buildGalleryRows(["a", "b", "c", "d", "e"].map(L)))).toEqual([
-      ["pair", ["a", "b"]],
-      ["pair", ["c", "d"]],
-      ["rest", ["e"]],
-    ]);
-  });
-
-  it("aceita outro padrão e lista vazia", () => {
-    const rows = buildGalleryRows([P("v1"), L("h1"), L("h2"), P("v2")], ["feature"]);
-    expect(ids(rows)).toEqual([["feature", ["v1", "h1", "h2", "v2"]]]);
+  it("lista vazia → nenhuma linha", () => {
     expect(buildGalleryRows([])).toEqual([]);
+  });
+
+  it("composições típicas", () => {
+    expect(layout("L")).toBe("L");
+    expect(layout("LL")).toBe("L L");
+    expect(layout("LP")).toBe("L P");
+    expect(layout("LLLL")).toBe("L L | L L");
+    expect(layout("PPPP")).toBe("P P P P");
+    // três horizontais: um grande e um par, em vez de três pequenos
+    expect(layout("LLL")).toBe("L | L L");
+    // dois horizontais empilhados entre/ao lado de verticais
+    expect(layout("LLPP")).toBe("(L/L) P P");
+    // a lista que estava no site antes do painel
+    expect(layout("LLPLLPP")).toBe("L L | P L | L P P");
+  });
+
+  it("mantém a ordem da lista (esquerda → direita, cima → baixo)", () => {
+    for (const pattern of allSequences(8)) {
+      const videos = sequence(pattern);
+      const order = buildGalleryRows(videos).flatMap((row) => row.units.flatMap(unitVideos));
+      expect(order.map((v) => v.id), pattern).toEqual(videos.map((v) => v.id));
+    }
+  });
+
+  it("toda linha tem um card inteiro, no máximo 4 colunas, e pilhas só de horizontais", () => {
+    for (const pattern of allSequences(8)) {
+      for (const row of buildGalleryRows(sequence(pattern))) {
+        expect(row.units.length, pattern).toBeLessThanOrEqual(LAYOUT.maxUnitsPerRow);
+        expect(row.units.some((unit) => unit.kind === "single"), pattern).toBe(true);
+        for (const unit of row.units) {
+          if (unit.kind === "stack") expect(unit.videos.map((v) => v.orientation)).toEqual(["landscape", "landscape"]);
+        }
+      }
+    }
+  });
+
+  it("nenhum vídeo fica pequeno demais para assistir, em qualquer combinação", () => {
+    for (const pattern of allSequences(9)) {
+      for (const row of buildGalleryRows(sequence(pattern))) {
+        const { height } = rowGeometry(row.units);
+        for (const unit of row.units) {
+          if (unit.kind === "stack") {
+            // cada metade da pilha: ≥ 40% da largura da galeria (≈ 430px no desktop)
+            expect(((height - LAYOUT.gap) / 2) * (16 / 9), pattern).toBeGreaterThanOrEqual(0.4);
+          } else if (unit.video.orientation === "landscape") {
+            expect(height * (16 / 9), pattern).toBeGreaterThanOrEqual(0.4);
+          } else {
+            // vertical: ≥ 33% da largura de altura (≈ 355px no desktop)
+            expect(height, pattern).toBeGreaterThanOrEqual(0.33);
+          }
+        }
+      }
+    }
+  });
+
+  it("nenhuma linha passa do teto de altura; linhas que não chegam nele ocupam a largura toda", () => {
+    for (const pattern of allSequences(8)) {
+      for (const row of buildGalleryRows(sequence(pattern))) {
+        const { height, fill } = rowGeometry(row.units);
+        expect(height).toBeLessThanOrEqual(LAYOUT.maxRowHeight);
+        if (height < LAYOUT.maxRowHeight) expect(fill).toBeCloseTo(1, 6);
+      }
+    }
+  });
+
+  it("a soma das proporções da linha (CSS --row-aspect) vem junto", () => {
+    const [row] = buildGalleryRows(sequence("LP"));
+    expect(row.aspect).toBeCloseTo(16 / 9 + 9 / 16, 6);
+  });
+});
+
+describe("buildLeadRows (Home com vídeo principal)", () => {
+  const lead = (pattern: string) => {
+    const videos = sequence(pattern);
+    return describeRows(buildLeadRows(videos, videos[0].id));
+  };
+
+  it("principal horizontal: sozinho na primeira linha, em qualquer combinação de secundários", () => {
+    for (const rest of ["", "L", "P", "LL", "PP", "LPL", "PLLP"]) {
+      const rows = lead(`L${rest}`).split(" | ");
+      expect(rows[0], `L${rest}`).toBe("L");
+      if (rest) expect(rows.length).toBeGreaterThan(1);
+    }
+  });
+
+  it("principal horizontal: nenhuma linha de secundários fica tão alta quanto a dele", () => {
+    for (const rest of ["L", "LL", "LLP", "LPL", "PP", "LLLL"]) {
+      const videos = sequence(`L${rest}`);
+      const [leadRow, ...others] = buildLeadRows(videos, videos[0].id);
+      const leadHeight = rowGeometry(leadRow.units).height;
+      for (const row of others) {
+        expect(rowGeometry(row.units, row.maxHeight).height, `L${rest}`).toBeLessThanOrEqual(leadHeight * 0.6 + 1e-9);
+      }
+    }
+  });
+
+  it("principal vertical: primeira coluna da composição normal (nunca esticado nem empilhado)", () => {
+    for (const rest of ["", "L", "LL", "PP", "LLP"]) {
+      const pattern = `P${rest}`;
+      expect(lead(pattern), pattern).toBe(layout(pattern));
+      expect(lead(pattern).startsWith("P")).toBe(true);
+    }
+  });
+
+  it("sem principal (ou id que não é o primeiro): galeria comum", () => {
+    const videos = sequence("LLP");
+    expect(describeRows(buildLeadRows(videos))).toBe(layout("LLP"));
+    expect(describeRows(buildLeadRows(videos, videos[1].id))).toBe(layout("LLP"));
   });
 });
