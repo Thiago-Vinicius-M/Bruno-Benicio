@@ -13,8 +13,6 @@ export function buildContractMessage(
   // formatPrice usa espaço não separável depois do "R$" (casado por \s); na mensagem, espaço comum.
   const price = formatPrice(model.price).replace(/\s/g, " ");
   return [
-    "Olá! Acessei o portfólio do Bruno e Benício e tenho interesse em contratar a dupla.",
-    "",
     `Modelo de show escolhido: ${model.name}`,
     `Valor apresentado: ${price}`,
     ...(schedule.date ? [`Data do evento: ${formatEventDate(schedule.date)}`] : []),

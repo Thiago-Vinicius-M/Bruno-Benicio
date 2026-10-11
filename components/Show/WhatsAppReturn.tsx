@@ -24,21 +24,33 @@ type Props = {
  * vira um link de verdade (wa.me), que abre o app no celular e o WhatsApp Web no
  * computador, com a mensagem preenchida para o contratante revisar e enviar.
  */
-export function WhatsAppReturn({ selected, date, time, state, onDateChange, onTimeChange, onRetry }: Props) {
+export function WhatsAppReturn({
+  selected,
+  date,
+  time,
+  state,
+  onDateChange,
+  onTimeChange,
+  onRetry,
+}: Props) {
   const id = useId();
   const statusId = `${id}-status`;
 
   let status: string;
-  if (!selected) status = "Escolha um formato acima para voltar ao WhatsApp com ele.";
+  if (!selected)
+    status = "Escolha um formato acima para voltar ao WhatsApp com ele.";
   else if (state.status === "error") status = state.message;
   else if (state.status === "loading") status = "Preparando a mensagem…";
-  else status = `Formato escolhido: ${selected.name} · ${formatPrice(selected.price)}`;
+  else
+    status = `Formato escolhido: ${selected.name} · ${formatPrice(selected.price)}`;
 
   return (
     <div className={styles.whatsapp}>
       {selected && (
         <fieldset className={styles.schedule}>
-          <legend className={`type-nav ${styles.scheduleLegend}`}>Data e horário do evento · opcionais</legend>
+          <legend className={`type-nav ${styles.scheduleLegend}`}>
+            Data e horário do evento · opcionais
+          </legend>
           <label className={styles.scheduleField}>
             <span className={styles.scheduleLabel}>Data</span>
             <input
@@ -74,11 +86,21 @@ export function WhatsAppReturn({ selected, date, time, state, onDateChange, onTi
           <span className={styles.srOnly}> (abre em nova aba)</span>
         </a>
       ) : state.status === "error" && state.retry ? (
-        <button type="button" className={styles.whatsappButton} onClick={onRetry} aria-describedby={statusId}>
+        <button
+          type="button"
+          className={styles.whatsappButton}
+          onClick={onRetry}
+          aria-describedby={statusId}
+        >
           Tentar novamente
         </button>
       ) : (
-        <button type="button" className={styles.whatsappButton} disabled aria-describedby={statusId}>
+        <button
+          type="button"
+          className={styles.whatsappButton}
+          disabled
+          aria-describedby={statusId}
+        >
           Voltar ao WhatsApp
         </button>
       )}
