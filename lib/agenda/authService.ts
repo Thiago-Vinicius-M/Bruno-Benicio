@@ -39,7 +39,7 @@ export async function requestPasswordReset(client: AgendaClient, email: string, 
   if (error) throw toAgendaError(error);
 }
 
-/** Define nova senha para o usuário logado (também usado ao aceitar convite/recuperação). */
+/** Define nova senha para o usuário logado (também usado ao concluir a recuperação). */
 export async function updatePassword(client: AgendaClient, newPassword: string): Promise<void> {
   if (newPassword.length < 8) throw validationError("A senha deve ter pelo menos 8 caracteres.");
   const { error } = await client.auth.updateUser({ password: newPassword });

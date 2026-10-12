@@ -127,7 +127,8 @@ describe("segurança financeira (RLS)", () => {
       await actAs(db, asUser(otherAdmin));
       expect(await count("select * from public.show_financial_entries")).toBe(6);
 
-      await actAs(db, asUser(adminId));
+      // Desativação pelo SQL Editor (a aplicação não altera perfis).
+      await actAs(db, superuser);
       await db.query("update public.profiles set deactivated_at = now() where id = $1", [otherAdmin]);
       await actAs(db, asUser(otherAdmin));
       expect(await count("select * from public.show_financial_entries")).toBe(0);
@@ -135,7 +136,7 @@ describe("segurança financeira (RLS)", () => {
   });
 });
 
-describe("autorização de shows e usuários", () => {
+describe("autorização de shows e perfis", () => {
   it("usuário autenticado sem perfil (cadastro aberto) ou desativado não acessa nada", async () => {
     for (const userId of [noProfileId, inactiveEditorId]) {
       await runAs(db, asUser(userId), async () => {
@@ -149,47 +150,51 @@ describe("autorização de shows e usuários", () => {
     }
   });
 
-  it("EDITOR não consegue criar usuário (perfil)", async () => {
+  it("pela API ninguém cria perfil, nem ADMIN", async () => {
     const newUser = await createUser(db, "novo@example.com");
-    await runAs(db, asUser(editorId), async () => {
-      const error = await pgError(
-        db,
-        "insert into public.profiles (id, name, role) values ($1, 'Novo', 'ADMIN')",
-        [newUser],
-      );
-      expect(error.code).toBe("42501");
-    });
+    for (const userId of [editorId, adminId]) {
+      await runAs(db, asUser(userId), async () => {
+        const error = await pgError(
+          db,
+          "insert into public.profiles (id, name, role) values ($1, 'Novo', 'ADMIN')",
+          [newUser],
+        );
+        expect(error.code).toBe("42501");
+      });
+    }
   });
 
-  it("EDITOR não consegue alterar o próprio papel nem o de outros", async () => {
-    await runAs(db, asUser(editorId), async () => {
-      // O RLS (UPDATE só para ADMIN) filtra a linha antes do trigger: nada é alterado.
-      const own = await db.query("update public.profiles set role = 'ADMIN' where id = $1", [editorId]);
-      expect(own.affectedRows).toBe(0);
-
-      const other = await db.query("update public.profiles set role = 'EDITOR' where id = $1", [adminId]);
-      expect(other.affectedRows).toBe(0);
-
-      // Nem o próprio nome: edição de perfis é exclusiva de ADMIN.
-      const rename = await db.query("update public.profiles set name = 'Outro' where id = $1", [editorId]);
-      expect(rename.affectedRows).toBe(0);
-    });
-    const { rows } = await db.query<{ name: string; role: string }>(
-      "select name, role from public.profiles where id = $1",
-      [editorId],
+  it("pela API ninguém altera perfis (papel, status ou nome), nem ADMIN, nem o próprio", async () => {
+    for (const userId of [editorId, adminId]) {
+      await runAs(db, asUser(userId), async () => {
+        for (const target of [editorId, adminId]) {
+          for (const sql of [
+            "update public.profiles set role = 'ADMIN' where id = $1",
+            "update public.profiles set deactivated_at = now() where id = $1",
+            "update public.profiles set name = 'Outro' where id = $1",
+          ]) {
+            expect((await pgError(db, sql, [target])).code).toBe("42501");
+          }
+        }
+      });
+    }
+    const { rows } = await db.query<{ name: string; role: string; active: boolean }>(
+      "select name, role, deactivated_at is null as active from public.profiles where id = any($1) order by role",
+      [[editorId, adminId]],
     );
-    expect(rows[0]).toEqual({ name: "editor", role: "EDITOR" });
+    expect(rows).toEqual([
+      { name: "admin", role: "ADMIN", active: true },
+      { name: "editor", role: "EDITOR", active: true },
+    ]);
   });
 
-  it("EDITOR lê só o próprio perfil; ADMIN lê todos", async () => {
-    await runAs(db, asUser(editorId), async () => {
-      const { rows } = await db.query<{ id: string }>("select id from public.profiles");
-      expect(rows.map((r) => r.id)).toEqual([editorId]);
-    });
-    await runAs(db, asUser(adminId), async () => {
-      // admin, editor e inativo (a conta sem perfil não tem linha em profiles).
-      expect(await count("select * from public.profiles")).toBe(3);
-    });
+  it("cada usuário lê só o próprio perfil, inclusive ADMIN", async () => {
+    for (const userId of [editorId, adminId]) {
+      await runAs(db, asUser(userId), async () => {
+        const { rows } = await db.query<{ id: string }>("select id from public.profiles");
+        expect(rows.map((r) => r.id)).toEqual([userId]);
+      });
+    }
   });
 
   it("desativado ainda lê o próprio perfil (para a aplicação saber o motivo), mas nenhum outro", async () => {
@@ -215,108 +220,33 @@ describe("autorização de shows e usuários", () => {
     });
   });
 
-  it("escalada de privilégio: EDITOR não se promove, não promove outros nem altera status", async () => {
-    // Tudo numa transação desfeita no final (nada vaza para os outros testes).
+  it("perfil criado pelo SQL Editor: nome normalizado, autoria preservada e created_by imutável", async () => {
+    const created = await createUser(db, "novo-perfil@example.com");
     await runAs(db, superuser, async () => {
-      const other = await createUser(db, "outro-editor@example.com", "EDITOR");
-      const fresh = await createUser(db, "cadastro@example.com");
-      await actAs(db, asUser(editorId));
-
-      // Não enxerga nem consegue atualizar perfis alheios (0 linhas).
-      for (const sql of [
-        "update public.profiles set role = 'ADMIN' where id = $1",
-        "update public.profiles set deactivated_at = now() where id = $1",
-      ]) {
-        expect((await db.query(sql, [other])).affectedRows).toBe(0);
-        expect((await db.query(sql.replace("$1", `'${adminId}'`))).affectedRows).toBe(0);
-      }
-      // O próprio perfil: nem papel nem status.
-      for (const sql of [
-        "update public.profiles set role = 'ADMIN' where id = $1",
-        "update public.profiles set deactivated_at = null, role = 'ADMIN' where id = $1",
-      ]) {
-        const result = await db.query(sql, [editorId]).catch((e) => e);
-        expect(result.affectedRows ?? 0).toBe(0);
-      }
-      // Nem cria um perfil ADMIN para uma conta nova.
-      expect((await pgError(db, "insert into public.profiles (id, name, role) values ($1, 'X', 'ADMIN')", [fresh])).code).toBe(
-        "42501",
-      );
-
-      await actAs(db, superuser);
-      const { rows } = await db.query<{ role: string; active: boolean }>(
-        "select role, deactivated_at is null as active from public.profiles where id = any($1) order by role",
-        [[editorId, other, adminId]],
-      );
-      expect(rows).toEqual([
-        { role: "ADMIN", active: true },
-        { role: "EDITOR", active: true },
-        { role: "EDITOR", active: true },
-      ]);
-    });
-  });
-
-  it("ADMIN convida (cria perfil) com autoria registrada; created_by é imutável", async () => {
-    const invited = await createUser(db, "convidado@example.com");
-    await runAs(db, asUser(adminId), async () => {
       const { rows } = await db.query<Record<string, unknown>>(
-        `insert into public.profiles (id, name, role, created_by, updated_by, deactivated_at)
-         values ($1, ' Convidado ', 'EDITOR', $2, $2, now())
-         returning name, created_by, updated_by, deactivated_at`,
-        [invited, editorId],
+        `insert into public.profiles (id, name, role, created_by)
+         values ($1, ' Novo ', 'EDITOR', $2)
+         returning name, created_by, updated_by`,
+        [created, adminId],
       );
-      expect(rows[0]).toEqual({ name: "Convidado", created_by: adminId, updated_by: adminId, deactivated_at: null });
+      expect(rows[0]).toEqual({ name: "Novo", created_by: adminId, updated_by: adminId });
 
-      await db.query("update public.profiles set name = 'Convidado 2', created_by = $2 where id = $1", [
-        invited,
-        editorId,
+      await db.query("update public.profiles set name = 'Novo 2', created_by = $2 where id = $1", [created, editorId]);
+      const after = await db.query<Record<string, unknown>>("select created_by from public.profiles where id = $1", [
+        created,
       ]);
-      const after = await db.query<Record<string, unknown>>(
-        "select created_by, updated_by from public.profiles where id = $1",
-        [invited],
-      );
-      expect(after.rows[0]).toEqual({ created_by: adminId, updated_by: adminId });
+      expect(after.rows[0]).toEqual({ created_by: adminId });
     });
   });
 
-  it("ADMIN altera papéis e desativa usuários, com autoria registrada", async () => {
-    await runAs(db, asUser(adminId), async () => {
-      await db.query("update public.profiles set role = 'ADMIN' where id = $1", [editorId]);
-      await db.query("update public.profiles set deactivated_at = '2000-01-01' where id = $1", [
-        inactiveEditorId,
-      ]);
-      await db.query("update public.profiles set deactivated_at = now() where id = $1", [editorId]);
-      const { rows } = await db.query<{ role: string; deactivated_by: string; recent: boolean }>(
-        `select role, deactivated_by, deactivated_at > now() - interval '1 minute' as recent
-         from public.profiles where id = $1`,
-        [editorId],
-      );
-      expect(rows[0]).toEqual({ role: "ADMIN", deactivated_by: adminId, recent: true });
-    });
-  });
-
-  it("ADMIN não remove o próprio acesso (nem rebaixando, nem desativando)", async () => {
-    await runAs(db, asUser(adminId), async () => {
-      const demote = await pgError(db, "update public.profiles set role = 'EDITOR' where id = $1", [adminId]);
-      expect(demote).toMatchObject({ code: "AG004", message: "Você não pode remover o próprio acesso administrativo." });
-      const deactivate = await pgError(db, "update public.profiles set deactivated_at = now() where id = $1", [
-        adminId,
-      ]);
-      expect(deactivate.code).toBe("AG004");
-      // Editar o próprio nome continua permitido.
-      await db.query("update public.profiles set name = 'admin' where id = $1", [adminId]);
-    });
-  });
-
-  it("ADMIN rebaixa outro ADMIN quando ainda resta um ADMIN ativo", async () => {
+  it("pelo SQL Editor, rebaixa outro ADMIN quando ainda resta um ADMIN ativo", async () => {
     await runAs(db, superuser, async () => {
       const second = await createUser(db, "segundo-admin@example.com", "ADMIN");
-      await actAs(db, asUser(adminId));
-      const { rows } = await db.query<{ role: string; updated_by: string }>(
-        "update public.profiles set role = 'EDITOR' where id = $1 returning role, updated_by",
+      const { rows } = await db.query<{ role: string }>(
+        "update public.profiles set role = 'EDITOR' where id = $1 returning role",
         [second],
       );
-      expect(rows[0]).toEqual({ role: "EDITOR", updated_by: adminId });
+      expect(rows[0]).toEqual({ role: "EDITOR" });
     });
   });
 

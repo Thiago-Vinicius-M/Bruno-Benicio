@@ -20,7 +20,6 @@ import { Dialog } from "../Dialog";
 import styles from "../Painel.module.css";
 import { useToast } from "../Toast";
 import agenda from "../Agenda/Agenda.module.css";
-import users from "../Usuarios/Users.module.css";
 import { HomeLimitsForm } from "./HomeLimitsForm";
 import { LayoutPreview } from "./LayoutPreview";
 import { PLACEMENT_LABEL, PLACEMENTS } from "./placement";
@@ -146,7 +145,7 @@ export function VideosView({ videos, limits, authors }: Props) {
               <div className={css.info}>
                 <p className={css.title}>
                   {video.title}
-                  <span className={users.state} data-state={video.active ? "active" : "inactive"}>
+                  <span className={agenda.state} data-state={video.active ? "active" : "inactive"}>
                     {video.active ? "Ativo" : "Inativo"}
                   </span>
                 </p>

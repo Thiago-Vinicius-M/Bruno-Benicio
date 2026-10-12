@@ -195,6 +195,25 @@
   border-radius: 999px;
 }
 
+/* Selo Ativo/Inativo das listas de Vídeos, Modelos de Show e Vendedores. */
+.state {
+  padding: 1px 8px;
+  font-size: 0.6875rem;
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+
+.state[data-state="active"] {
+  color: var(--panel-success);
+}
+
+.state[data-state="inactive"] {
+  color: var(--panel-muted);
+}
+
 .actions {
   grid-area: actions;
   display: flex;

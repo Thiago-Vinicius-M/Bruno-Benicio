@@ -46,8 +46,6 @@ const AUTH_ERRORS: Record<string, { code: AgendaErrorCode; message?: string }> =
   weak_password: { code: "VALIDATION", message: "Senha fraca. Use uma senha mais longa e variada." },
   same_password: { code: "VALIDATION", message: "A nova senha deve ser diferente da atual." },
   validation_failed: { code: "VALIDATION" },
-  email_exists: { code: "CONFLICT", message: "Já existe um usuário com este e-mail." },
-  user_already_exists: { code: "CONFLICT", message: "Já existe um usuário com este e-mail." },
   user_banned: { code: "FORBIDDEN", message: "Este usuário está desativado." },
   email_not_confirmed: { code: "FORBIDDEN", message: "E-mail ainda não confirmado. Use o link enviado para o seu e-mail." },
   reauthentication_needed: { code: "UNAUTHENTICATED", message: "Por segurança, saia e entre novamente antes de trocar a senha." },

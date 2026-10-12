@@ -1,6 +1,6 @@
 # Bruno & Benício
 
-Site da dupla Bruno & Benício, com um painel administrativo privado em `/painel` (agenda de shows e usuários).
+Site da dupla Bruno & Benício, com um painel administrativo privado em `/painel` (agenda de shows, vídeos, modelos de show e vendedores).
 
 ## Stack
 
@@ -30,7 +30,7 @@ Os nomes e a função de cada uma estão em [.env.example](.env.example). Valore
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Pública (navegador) | Sim |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Pública (navegador) | Sim |
-| `SUPABASE_SECRET_KEY` | **Somente servidor** | Sim (gestão de usuários) |
+| `SUPABASE_SECRET_KEY` | **Somente local** | Não (só `npm run db:check` e testes reais; não vai para a Vercel) |
 | `SITE_URL` | Somente servidor | Não (recomendada com domínio próprio) |
 
 Nunca coloque a secret key numa variável `NEXT_PUBLIC_`. A aplicação se recusa a iniciar se detectar uma chave secreta ali.
@@ -50,6 +50,6 @@ Nunca coloque a secret key numa variável `NEXT_PUBLIC_`. A aplicação se recus
 ## Deploy na Vercel
 
 1. Importe o repositório na Vercel. O framework (Next.js), o comando de build e a pasta de saída são detectados automaticamente, sem precisar de `vercel.json`.
-2. Em **Settings → Environment Variables**, cadastre as variáveis da tabela acima para *Production* e, se for usar previews, para *Preview*. `SUPABASE_SECRET_KEY` deve ser marcada como **Sensitive**.
+2. Em **Settings → Environment Variables**, cadastre as variáveis da tabela acima para *Production* e, se for usar previews, para *Preview*, **exceto** `SUPABASE_SECRET_KEY`, que a aplicação não usa.
 3. Faça o deploy. As variáveis `NEXT_PUBLIC_` são embutidas no build, então depois de alterá-las é preciso fazer **Redeploy**.
-4. No Supabase (*Authentication → URL Configuration*), defina **Site URL** com o domínio de produção e adicione `https://<domínio>/auth/confirm**` em **Redirect URLs**. Sem isso, os links de convite e de recuperação de senha não voltam para o site.
+4. No Supabase (*Authentication → URL Configuration*), defina **Site URL** com o domínio de produção e adicione `https://<domínio>/auth/confirm**` em **Redirect URLs**. Sem isso, os links de recuperação de senha não voltam para o site.

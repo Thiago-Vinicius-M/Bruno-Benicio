@@ -7,8 +7,6 @@ export const PANEL_ROUTES = {
   login: "/painel/login",
   recoverPassword: "/painel/recuperar-senha",
   accessDenied: "/painel/acesso-negado",
-  /** Conclui links do Auth que trazem a sessão no fragmento (#access_token), invisível ao servidor. */
-  confirmLink: "/painel/confirmar",
   changePassword: "/painel/configuracoes/senha",
   agenda: "/painel/agenda",
   /** Vídeos da Home e do "Ver mais". */
@@ -17,17 +15,12 @@ export const PANEL_ROUTES = {
   showModels: "/painel/modelos",
   /** Vendedores e seus links comerciais. Exclusiva de ADMIN. */
   sellers: "/painel/vendedores",
-  /** Exclusiva de ADMIN. */
-  users: "/painel/usuarios",
-  /** Callback do Supabase Auth (recuperação de senha e convites). */
+  /** Callback do Supabase Auth (recuperação de senha). */
   authConfirm: "/auth/confirm",
 } as const;
 
 /** Páginas acessíveis sem sessão. Um usuário logado que abre uma delas vai para o painel. */
 const GUEST_ONLY = new Set<string>([PANEL_ROUTES.login, PANEL_ROUTES.recoverPassword]);
-
-/** Sempre acessíveis: quem chega por um link de convite pode ou não já ter sessão. */
-const ALWAYS_PUBLIC = new Set<string>([PANEL_ROUTES.confirmLink]);
 
 const normalize = (pathname: string) => (pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname);
 
@@ -44,7 +37,7 @@ export const isPanelPath = (pathname: string) => {
  */
 export function panelRedirect(pathname: string, isAuthenticated: boolean): string | null {
   const path = normalize(pathname);
-  if (!isPanelPath(path) || ALWAYS_PUBLIC.has(path)) return null;
+  if (!isPanelPath(path)) return null;
   if (GUEST_ONLY.has(path)) return isAuthenticated ? PANEL_ROUTES.home : null;
   return isAuthenticated ? null : PANEL_ROUTES.login;
 }

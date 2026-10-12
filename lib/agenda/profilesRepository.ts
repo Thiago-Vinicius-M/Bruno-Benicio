@@ -1,7 +1,6 @@
 import type { AgendaClient } from "@/lib/supabase/client";
-import { Constants } from "@/lib/supabase/database.types";
 import { getSessionUser } from "./authService";
-import { AgendaError, toAgendaError, unwrap, validationError } from "./errors";
+import { AgendaError, toAgendaError } from "./errors";
 import type { Profile, Role } from "./types";
 
 export const PROFILE_COLUMNS =
@@ -9,7 +8,7 @@ export const PROFILE_COLUMNS =
 
 /**
  * Perfil do usuário logado, ou `null` se não houver sessão. Um usuário do Auth sem
- * perfil (ex.: cadastro não convidado) também resulta em `null` — sem acesso.
+ * perfil (ex.: cadastro aberto por engano) também resulta em `null` — sem acesso.
  */
 export async function getCurrentProfile(client: AgendaClient): Promise<Profile | null> {
   const user = await getSessionUser(client);
@@ -38,37 +37,9 @@ export async function requireProfile(client: AgendaClient, role?: Role): Promise
 
 export const requireAdmin = (client: AgendaClient) => requireProfile(client, "ADMIN");
 
-/**
- * Perfis completos da equipe. Pelo RLS, só ADMIN recebe todos; os demais recebem apenas
- * o próprio. Para exibir autoria, use `listTeamNames`.
- */
-export async function listProfiles(client: AgendaClient): Promise<Profile[]> {
-  const { data, error } = await client.from("profiles").select(PROFILE_COLUMNS).order("name");
-  if (error) throw toAgendaError(error);
-  return data;
-}
-
 /** Nomes da equipe por id (qualquer staff ativo), para "criado/excluído por" no painel. */
 export async function listTeamNames(client: AgendaClient): Promise<Record<string, string>> {
   const { data, error } = await client.rpc("get_team_names");
   if (error) throw toAgendaError(error);
   return Object.fromEntries(data.map((member) => [member.id, member.name]));
-}
-
-export async function updateProfileName(client: AgendaClient, id: string, name: string): Promise<Profile> {
-  const trimmed = name.trim();
-  if (!trimmed || trimmed.length > 120) throw validationError("Informe um nome com até 120 caracteres.");
-  return unwrap(
-    await client.from("profiles").update({ name: trimmed }).eq("id", id).select(PROFILE_COLUMNS).single(),
-    "Usuário não encontrado.",
-  );
-}
-
-/** Somente ADMIN (garantido pelo trigger/RLS). O banco impede remover o último ADMIN. */
-export async function setUserRole(client: AgendaClient, id: string, role: Role): Promise<Profile> {
-  if (!Constants.public.Enums.app_role.includes(role)) throw validationError("Papel inválido.");
-  return unwrap(
-    await client.from("profiles").update({ role }).eq("id", id).select(PROFILE_COLUMNS).single(),
-    "Usuário não encontrado.",
-  );
 }
