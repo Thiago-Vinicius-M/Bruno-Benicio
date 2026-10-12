@@ -25,9 +25,11 @@ describe("PanelShell", () => {
     expect(screen.getByText("Bruno")).toBeTruthy();
     expect(screen.getByText("Administrador")).toBeTruthy();
     const nav = within(screen.getByRole("navigation", { name: "Painel" }));
-    for (const label of ["Agenda", "Modelos de Show", "Vendedores", "Financeiro", "Usuários", "Configurações"]) {
+    for (const label of ["Agenda", "Vídeos", "Modelos de Show", "Vendedores", "Configurações"]) {
       expect(nav.getByText(label)).toBeTruthy();
     }
+    expect(nav.queryByText("Financeiro")).toBeNull();
+    expect(nav.queryByText("Usuários")).toBeNull();
     expect(screen.getByRole("button", { name: "Sair" })).toBeTruthy();
     expect(screen.getByText("conteúdo")).toBeTruthy();
   });
@@ -40,25 +42,18 @@ describe("PanelShell", () => {
     );
     expect(screen.getByText("Editor")).toBeTruthy();
     const nav = within(screen.getByRole("navigation", { name: "Painel" }));
-    expect(nav.queryByText("Financeiro")).toBeNull();
-    expect(nav.queryByText("Usuários")).toBeNull();
     expect(nav.queryByText("Modelos de Show")).toBeNull();
     expect(nav.queryByText("Vendedores")).toBeNull();
     expect(nav.getByText("Agenda")).toBeTruthy();
   });
 
-  it("funcionalidades futuras aparecem desabilitadas, sem link", () => {
+  it("seções do menu são links para as rotas do painel", () => {
     render(
       <PanelShell user={{ id: "1", name: "Bruno", role: "ADMIN" }}>
         <p />
       </PanelShell>,
     );
-    const financial = screen.getByText("Financeiro").closest("[aria-disabled]");
-    expect(financial?.getAttribute("aria-disabled")).toBe("true");
-    expect(financial?.closest("a")).toBeNull();
-    // Agenda e Usuários (ADMIN) já estão disponíveis.
     expect(screen.getByRole("link", { name: "Agenda" }).getAttribute("href")).toBe("/painel/agenda");
-    expect(screen.getByRole("link", { name: "Usuários" }).getAttribute("href")).toBe("/painel/usuarios");
     expect(screen.getByRole("link", { name: "Modelos de Show" }).getAttribute("href")).toBe("/painel/modelos");
     expect(screen.getByRole("link", { name: "Vendedores" }).getAttribute("href")).toBe("/painel/vendedores");
   });

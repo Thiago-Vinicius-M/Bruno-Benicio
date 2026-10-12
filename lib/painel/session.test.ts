@@ -62,7 +62,7 @@ describe("requirePanelUser", () => {
   });
 });
 
-describe("requirePanelAdmin (/painel/usuarios e ações de usuários)", () => {
+describe("requirePanelAdmin (/painel/modelos, /painel/vendedores e suas ações)", () => {
   it("visitante vai para o login", async () => {
     await expect(requirePanelAdmin()).rejects.toThrow("REDIRECT /painel/login");
   });

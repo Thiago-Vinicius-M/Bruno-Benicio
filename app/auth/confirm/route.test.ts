@@ -42,21 +42,15 @@ describe("/auth/confirm (volta do e-mail de recuperação)", () => {
     await expect(call("?token_hash=abc&type=recovery")).rejects.toThrow("REDIRECT /painel/login?erro=link");
   });
 
-  it("tipo não aceito não cria sessão", async () => {
-    await expect(call("?token_hash=abc&type=signup")).rejects.toThrow("REDIRECT /painel/login?erro=link");
+  it("tipo não aceito (inclusive convite) não cria sessão", async () => {
+    for (const type of ["signup", "invite"]) {
+      await expect(call(`?token_hash=abc&type=${type}`)).rejects.toThrow("REDIRECT /painel/login?erro=link");
+    }
     expect(auth.verifyOtp).not.toHaveBeenCalled();
   });
 
-  it("convite com token_hash abre a criação de senha", async () => {
-    await expect(call("?token_hash=abc&type=invite")).rejects.toThrow("REDIRECT /painel/configuracoes/senha?convite=1");
-    expect(auth.verifyOtp).toHaveBeenCalledWith({ type: "invite", token_hash: "abc" });
-  });
-
-  it("sem token na query (sessão no #fragmento): segue para /painel/confirmar mantendo o next", async () => {
-    await expect(call("?next=%2Fpainel%2Fconfiguracoes%2Fsenha%3Fconvite%3D1")).rejects.toThrow(
-      "REDIRECT /painel/confirmar?next=%2Fpainel%2Fconfiguracoes%2Fsenha%3Fconvite%3D1",
-    );
-    await expect(call("?next=https%3A%2F%2Fevil.com")).rejects.toThrow("REDIRECT /painel/confirmar?next=%2Fpainel");
+  it("sem token na query volta ao login com aviso", async () => {
+    await expect(call("?next=%2Fpainel")).rejects.toThrow("REDIRECT /painel/login?erro=link");
     expect(auth.verifyOtp).not.toHaveBeenCalled();
     expect(auth.exchangeCodeForSession).not.toHaveBeenCalled();
   });
