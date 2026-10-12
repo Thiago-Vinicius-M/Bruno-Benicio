@@ -7,6 +7,7 @@ import {
   updateShow,
   type ListShowsOptions,
 } from "@/lib/agenda/showsRepository";
+import { setAgendaPublicEnabled } from "@/lib/agenda/settingsRepository";
 import type { ShowInput } from "@/lib/agenda/types";
 import type { AgendaClient } from "@/lib/supabase/client";
 
@@ -102,3 +103,13 @@ export const restoreShowById = async (client: AgendaClient, id: unknown) =>
   isId(id)
     ? run(() => restoreShow(client, id), "Show restaurado com sucesso.", "Não foi possível restaurar o show. Tente novamente.")
     : invalidShow;
+
+/** Liga/desliga a agenda no site (seção AGENDA da Home e o link na navegação). */
+export const setAgendaPublicFromInput = async (client: AgendaClient, enabled: unknown): Promise<ShowActionResult> =>
+  typeof enabled === "boolean"
+    ? run(
+        () => setAgendaPublicEnabled(client, enabled),
+        enabled ? "Agenda habilitada: já aparece no site." : "Agenda desabilitada: saiu do site.",
+        "Não foi possível alterar a agenda do site. Tente novamente.",
+      )
+    : { status: "error", message: "Opção inválida." };

@@ -17,11 +17,31 @@ export const LINKS_END: NavLink[] = [
   { label: "CONTATO", href: "#contato" },
 ];
 
-/** Todos os links, na ordem da página. */
-export const NAV_LINKS = [...LINKS_START, ...LINKS_END];
+/** Só com a agenda habilitada no painel: abre o lado direito (a seção vem logo após VIDEOS/MÚSICAS). */
+export const AGENDA_LINK: NavLink = { label: "AGENDA", href: "#agenda" };
 
-/** Ids das seções, na ordem da página (fora do componente: referência estável para o hook). */
-export const SECTION_IDS = NAV_LINKS.map((link) => link.href.slice(1));
+export type NavLayout = {
+  start: NavLink[];
+  end: NavLink[];
+  /** Todos os links, na ordem da página. */
+  all: NavLink[];
+  /** Ids das seções, na ordem da página (para useActiveSection). */
+  sectionIds: string[];
+};
+
+function navLayout(end: NavLink[]): NavLayout {
+  const all = [...LINKS_START, ...end];
+  return { start: LINKS_START, end, all, sectionIds: all.map((link) => link.href.slice(1)) };
+}
+
+// Fora do componente: referências estáveis para o hook.
+const WITHOUT_AGENDA = navLayout(LINKS_END);
+const WITH_AGENDA = navLayout([AGENDA_LINK, ...LINKS_END]);
+
+export const navFor = (agenda: boolean) => (agenda ? WITH_AGENDA : WITHOUT_AGENDA);
+
+/** Navegação sem a agenda (padrão). */
+export const NAV_LINKS = WITHOUT_AGENDA.all;
 
 /** aria-current do link da seção atual (useActiveSection). */
 export function currentFor(link: NavLink, active: string) {

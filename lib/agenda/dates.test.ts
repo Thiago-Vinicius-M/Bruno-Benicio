@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { currentMonthRange, isIsoDate, isTimeOfDay, periodRange } from "./dates";
+import { currentMonthRange, isIsoDate, isTimeOfDay, periodRange, restOfMonthRange } from "./dates";
+
+describe("restOfMonthRange (agenda do site)", () => {
+  it("de hoje até o fim do mês, no fuso de São Paulo", () => {
+    expect(restOfMonthRange(new Date("2026-10-12T15:00:00-03:00"))).toEqual({ from: "2026-10-12", to: "2026-10-31" });
+    // 23h do último dia em São Paulo (já é dia 1º em UTC): continua o mesmo mês.
+    expect(restOfMonthRange(new Date("2026-02-28T23:00:00-03:00"))).toEqual({ from: "2026-02-28", to: "2026-02-28" });
+  });
+});
 
 describe("currentMonthRange", () => {
   it("29/09/2026 mostra de 01/09 a 30/09", () => {

@@ -38,7 +38,10 @@ export function MoreButton({ experience, label = "Ver mais", only, className }: 
       onClick={onClick}
     >
       {label}
-      <span aria-hidden="true">→</span>
+      {/* Mesmo ícone do "Voltar" (ExperienceLayer), espelhado: aponta para a direita. */}
+      <svg className={styles.moreIcon} viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 12h14M13 6l6 6-6 6" />
+      </svg>
     </a>
   );
 }

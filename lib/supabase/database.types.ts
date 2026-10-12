@@ -14,6 +14,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      agenda_settings: {
+        Row: {
+          id: boolean
+          public_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: boolean
+          public_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: boolean
+          public_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agenda_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -432,6 +461,12 @@ export type Database = {
           show_time: string
           venue_instagram: string
           venue_name: string
+        }[]
+      }
+      get_public_agenda_settings: {
+        Args: never
+        Returns: {
+          public_enabled: boolean
         }[]
       }
       get_public_show_models: {

@@ -1,3 +1,18 @@
 .models {
   padding-block-start: var(--space-2xl);
 }
+
+/* Máscara de cada palavra do "EAI, GOSTOU?" (stagger): o texto sobe de dentro da linha. */
+.mask {
+  display: inline-block;
+  overflow: hidden;
+  padding: 0.04em 0.06em 0.08em;
+  margin: -0.04em -0.06em -0.08em;
+  vertical-align: top;
+}
+
+.word,
+.char {
+  display: inline-block;
+  transform-origin: 0% 100%;
+}

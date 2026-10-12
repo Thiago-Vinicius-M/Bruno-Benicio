@@ -12,17 +12,26 @@ function drawer() {
 }
 
 describe("Header", () => {
-  it("a topbar e a gaveta têm as mesmas seções, sem Modelos nem Agenda", () => {
+  const navLabels = () =>
+    [...document.querySelectorAll("nav")].map((nav) =>
+      within(nav).getAllByRole("link", { hidden: true }).map((a) => a.textContent).filter((t) => t),
+    );
+
+  it("a topbar e a gaveta têm as mesmas seções, sem Modelos nem Agenda (agenda desabilitada)", () => {
     render(<Header />);
     const labels = NAV_LINKS.map((link) => link.label);
 
     expect(labels).toEqual(["HOME", "SOBRE NÓS", "VIDEOS/MÚSICAS", "NOSSO SHOW", "CONTATO"]);
     expect(NAV_LINKS.some((link) => link.href === "#agenda")).toBe(false);
-    for (const nav of document.querySelectorAll("nav")) {
-      expect(within(nav).getAllByRole("link", { hidden: true }).map((a) => a.textContent).filter((t) => t)).toEqual(
-        labels,
-      );
-    }
+    expect(navLabels()).toEqual([labels, labels]);
+  });
+
+  it("com a agenda habilitada, AGENDA entra depois de VIDEOS/MÚSICAS na topbar e na gaveta", () => {
+    render(<Header agenda />);
+    const labels = ["HOME", "SOBRE NÓS", "VIDEOS/MÚSICAS", "AGENDA", "NOSSO SHOW", "CONTATO"];
+
+    expect(navLabels()).toEqual([labels, labels]);
+    expect(within(drawer()).getByText("AGENDA").getAttribute("href")).toBe("#agenda");
   });
 
   it("botão de menu abre e fecha a gaveta, com rótulo e aria-expanded", () => {

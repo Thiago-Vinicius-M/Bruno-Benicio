@@ -1,0 +1,306 @@
+/*
+ * Seção AGENDA — layout do Figma (agenda.txt), desenhado num frame de 1920px.
+ *
+ *   Título: mesmo estilo dos demais títulos de seção (.type-title, globals.css).
+ *   Linhas separadas por um filete duplo branco (2px · 2px de vão · 2px no Figma).
+ *   Cada linha: pílula (gradiente laranja → transparente) com dia da semana em branco e
+ *   data em laranja · local centralizado · horário. Textos em Montserrat 500.
+ *
+ * Medidas da linha em em (base = texto da linha, 64px no Figma), então tudo escala junto:
+ *   linha 110px → 1.72em · pílula 344 × 87px → 5.375em × 1.36em, raio 49px → 0.766em.
+ * No máximo o texto fica em 36px (≈ 56% do Figma, a mesma escala do resto do site).
+ */
+.agenda {
+  --agenda-orange: #ff8d28; /* Figma: Accents/Orange */
+  --agenda-line: 1px double var(--color-foreground);
+  --agenda-text: clamp(0.9375rem, 0.55rem + 1.6vw, 2.25rem);
+
+  padding-block-end: var(--space-2xl);
+}
+
+.stage {
+  position: relative;
+}
+
+/* Mês atual, logo abaixo do título. */
+.month {
+  margin-block-start: var(--space-3xs);
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--color-foreground-muted);
+}
+
+.carousel,
+.empty {
+  margin-block-start: var(--space-lg);
+}
+
+.list,
+.empty {
+  font-family: var(--font-agenda), sans-serif;
+  font-size: var(--agenda-text);
+  font-weight: 500;
+  color: var(--color-foreground);
+}
+
+/*
+ * Páginas de até 7 shows empilhadas na mesma célula: a altura é a da maior (nada pula na
+ * troca) e a última, mais curta, fica no topo. Só a ativa aparece; a troca
+ * (animations/panelSwap.ts) sobrepõe isso enquanto acontece. overflow-x: clip recorta o
+ * que desliza para fora, sem rolagem lateral.
+ *
+ * Com mais de uma página: touch-action pan-y → o dedo na vertical continua rolando a
+ * página; na horizontal, o gesto troca de página.
+ */
+.pages {
+  display: grid;
+  overflow-x: clip;
+}
+
+.pages[data-paged] {
+  touch-action: pan-y;
+  user-select: none;
+  cursor: grab;
+}
+
+.pages[data-paged]:active {
+  cursor: grabbing;
+}
+
+.list {
+  grid-area: 1 / 1;
+  align-self: start;
+  border-block-start: var(--agenda-line);
+}
+
+.list:not([data-active]) {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.carousel {
+  position: relative;
+}
+
+/*
+ * Setas ‹ › fora da lista, centralizadas na altura das linhas (descontando as bolinhas:
+ * 44px + 12px). Só no desktop; no celular/tablet troca-se arrastando ou pelas bolinhas.
+ */
+.arrow {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .arrow {
+    position: absolute;
+    top: calc((100% - 56px) / 2);
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    color: var(--color-foreground);
+    background: none;
+    border: 1px solid rgb(255 255 255 / 0.3);
+    border-radius: 50%;
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition:
+      color 0.25s ease,
+      border-color 0.25s ease,
+      opacity 0.25s ease;
+  }
+
+  .arrow[data-side="prev"] {
+    right: calc(100% + 16px);
+  }
+
+  .arrow[data-side="next"] {
+    left: calc(100% + 16px);
+  }
+
+  .arrow svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .arrow:hover:not(:disabled) {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  .arrow:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  .arrow:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+}
+
+/* Desktop estreito: a margem da página não comporta as setas por fora — ficam dentro. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .carousel[data-paged] {
+    padding-inline: 60px;
+  }
+
+  .arrow[data-side="prev"] {
+    right: auto;
+    left: 0;
+  }
+
+  .arrow[data-side="next"] {
+    left: auto;
+    right: 0;
+  }
+}
+
+/* Indicador ● ○ (igual ao SOBRE NÓS): área de toque de 44px, bolinha de 10px. */
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-block-start: var(--space-3xs);
+}
+
+.dot {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dot::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--color-foreground-muted);
+  border-radius: 50%;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    transform 0.3s ease;
+}
+
+.dot[aria-current]::before {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  transform: scale(1.15);
+}
+
+.dot:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -6px;
+  border-radius: 50%;
+}
+
+/*
+ * Pílula à esquerda · local no centro da linha · horário centralizado na última coluna
+ * (1fr · 2fr · 1fr: o meio da coluna central é o meio da linha).
+ */
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+  align-items: center;
+  column-gap: 0.25em;
+  min-height: 1.72em;
+  padding-block: 0.18em;
+  border-block-end: var(--agenda-line);
+  line-height: 1.15;
+}
+
+.date {
+  display: flex;
+  align-items: center;
+  gap: 0.2em;
+  justify-self: start;
+  width: 5.375em;
+  max-width: 100%;
+  min-height: 1.36em;
+  margin-inline-start: 0.47em;
+  padding-inline: 0.3em;
+  white-space: nowrap;
+  background: linear-gradient(
+    90deg,
+    var(--agenda-orange) 0%,
+    rgb(56 55 53 / 0.5) 52%,
+    rgb(115 115 115 / 0) 71%
+  );
+  border-radius: 0.766em;
+}
+
+.day {
+  color: var(--agenda-orange);
+  font-variant-numeric: tabular-nums;
+}
+
+.venue {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* Instagram da casa (só quando o show tem): menor, logo abaixo do nome. */
+.instagram {
+  font-size: max(0.5em, 0.75rem); /* no celular não fica abaixo de 12px */
+  line-height: 1.3;
+  color: var(--color-foreground-muted);
+  border-radius: 2px;
+  transition: color 0.25s ease;
+}
+
+.instagram:hover {
+  color: var(--agenda-orange);
+}
+
+.instagram:focus-visible {
+  outline: 2px solid var(--agenda-orange);
+  outline-offset: 2px;
+}
+
+.time {
+  justify-self: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  padding-block: 0.5em;
+  text-align: center;
+  border-block: var(--agenda-line);
+}
+
+/*
+ * Celular: a coluna da data e a do horário ficam do tamanho do conteúdo e o local ocupa o
+ * resto (centralizado nele), para nomes longos não espremerem a linha.
+ */
+@media (max-width: 767px) {
+  .row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    column-gap: 0.6em;
+  }
+
+  .date {
+    margin-inline-start: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot::before,
+  .arrow,
+  .instagram {
+    transition: none;
+  }
+}

@@ -28,6 +28,9 @@ export const formatShowDate = (isoDate: string) => {
   return `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`;
 };
 
+/** `2026-10-05` → `05/10` (agenda do site). */
+export const formatShowDayMonth = (isoDate: string) => formatShowDate(isoDate).slice(0, 5);
+
 /** `21:30:00` → `21:30` (o banco devolve segundos). */
 export const formatShowTime = (time: string) => time.slice(0, 5);
 

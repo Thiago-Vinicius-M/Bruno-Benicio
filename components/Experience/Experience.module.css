@@ -110,6 +110,19 @@
     color 0.25s ease;
 }
 
+/* Mesmo traço do ícone do "Voltar" (.backIcon). */
+.moreIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.25s ease;
+}
+
 .more:focus-visible {
   outline: 2px solid var(--color-foreground);
   outline-offset: 3px;
@@ -119,6 +132,10 @@
   .more:hover {
     background: var(--color-accent);
     color: var(--color-background);
+  }
+
+  .more:hover .moreIcon {
+    transform: translateX(3px);
   }
 }
 
@@ -132,7 +149,8 @@
 @media (prefers-reduced-motion: reduce) {
   .back,
   .backIcon,
-  .more {
+  .more,
+  .moreIcon {
     transition: none;
   }
 }

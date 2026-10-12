@@ -1,6 +1,8 @@
 import type { AgendaClient } from "@/lib/supabase/client";
-import { currentMonthRange } from "./dates";
+import { createSupabasePublicClient } from "@/lib/supabase/public";
+import { agendaNow, currentMonthRange, restOfMonthRange, type AgendaNow } from "./dates";
 import { toAgendaError } from "./errors";
+import { getPublicAgendaEnabled } from "./settingsRepository";
 import type { DateRange, PublicShow } from "./types";
 
 /**
@@ -17,4 +19,27 @@ export async function getPublicAgenda(client: AgendaClient, range: DateRange): P
 /** Shows do mês corrente (fuso de São Paulo). Em outubro passa a mostrar outubro sozinho. */
 export function getCurrentMonthAgenda(client: AgendaClient, now: Date = new Date()): Promise<PublicShow[]> {
   return getPublicAgenda(client, currentMonthRange(now));
+}
+
+/**
+ * Seção AGENDA da Home: `null` = desabilitada no painel (sem seção e sem link na navegação).
+ * `now` é o "agora" (São Paulo) de quando a página foi gerada; o navegador continua tirando
+ * os shows que já passaram (components/Agenda) sem esperar a página ser regenerada.
+ */
+export type PublicAgendaState = { shows: PublicShow[]; now: AgendaNow } | null;
+
+/**
+ * Shows do mês atual de hoje em diante, só com a agenda habilitada (nada de meses passados
+ * nem do próximo mês). Sem banco (não configurado ou fora do ar) a seção simplesmente não
+ * aparece — o resto do site continua no ar.
+ */
+export async function loadPublicAgenda(now: Date = new Date()): Promise<PublicAgendaState> {
+  try {
+    const client = createSupabasePublicClient();
+    if (!(await getPublicAgendaEnabled(client))) return null;
+    return { shows: await getPublicAgenda(client, restOfMonthRange(now)), now: agendaNow(now) };
+  } catch (error) {
+    console.error("[agenda] falha ao carregar a agenda do site", error);
+    return null;
+  }
 }

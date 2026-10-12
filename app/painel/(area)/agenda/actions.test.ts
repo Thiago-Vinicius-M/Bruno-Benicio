@@ -19,7 +19,13 @@ vi.mock("next/navigation", () => ({
   },
 }));
 
-const { createShowAction, deleteShowAction, restoreShowAction, updateShowAction } = await import("./actions");
+const {
+  createShowAction,
+  deleteShowAction,
+  restoreShowAction,
+  setAgendaPublicAction,
+  updateShowAction,
+} = await import("./actions");
 
 const USER_ID = "00000000-0000-0000-0000-000000000001";
 const SHOW_ID = "11111111-1111-4111-8111-111111111111";
@@ -49,12 +55,30 @@ const operations = [
 ] as const;
 
 describe.each(["ADMIN", "EDITOR"] as const)("%s", (role) => {
-  it.each(operations)("pode %s e a lista é revalidada", async (_, run, message) => {
+  it.each(operations)("pode %s; a lista e a Home são revalidadas", async (_, run, message) => {
     signedInAs(role);
     await expect(run()).resolves.toEqual({ status: "success", message });
     expect(tablesTouched()).toEqual(["profiles", "shows"]);
-    expect(state.revalidated).toEqual(["/painel/agenda"]);
+    expect(state.revalidated).toEqual(["/painel/agenda", "/"]);
   });
+
+  it.each([
+    [true, "Agenda habilitada: já aparece no site."],
+    [false, "Agenda desabilitada: saiu do site."],
+  ])("habilita/desabilita a agenda no site (%s)", async (enabled, message) => {
+    signedInAs(role, { data: { public_enabled: enabled }, error: null } as never);
+    await expect(setAgendaPublicAction(enabled)).resolves.toEqual({ status: "success", message });
+    expect(tablesTouched()).toEqual(["profiles", "agenda_settings"]);
+    expect(state.fake.calls.filter(([m]) => m === "update").map(([, row]) => row)).toEqual([{ public_enabled: enabled }]);
+    expect(state.revalidated).toEqual(["/painel/agenda", "/"]);
+  });
+});
+
+it("interruptor da agenda só aceita true/false (banco intocado)", async () => {
+  signedInAs("ADMIN");
+  await expect(setAgendaPublicAction("sim")).resolves.toEqual({ status: "error", message: "Opção inválida." });
+  expect(tablesTouched()).toEqual(["profiles"]);
+  expect(state.revalidated).toEqual([]);
 });
 
 describe("segurança", () => {

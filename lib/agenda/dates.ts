@@ -28,7 +28,9 @@ const toIso = (date: Date) => date.toISOString().slice(0, 10);
  * Data e hora de agora no calendário da banda (`YYYY-MM-DD` e `HH:MM`), para comparar
  * com show_date/show_time — que também são "de parede", sem fuso.
  */
-export function agendaNow(now: Date = new Date(), timeZone: string = AGENDA_TIME_ZONE): { date: string; time: string } {
+export type AgendaNow = { date: string; time: string };
+
+export function agendaNow(now: Date = new Date(), timeZone: string = AGENDA_TIME_ZONE): AgendaNow {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone,
     year: "numeric",
@@ -45,6 +47,14 @@ export function agendaNow(now: Date = new Date(), timeZone: string = AGENDA_TIME
 /** Primeiro e último dia do mês corrente. Ex.: 29/09/2026 → 2026-09-01 a 2026-09-30. */
 export function currentMonthRange(now: Date = new Date(), timeZone: string = AGENDA_TIME_ZONE): DateRange {
   return periodRange("month", now, timeZone);
+}
+
+/**
+ * De hoje até o último dia do mês corrente: o período da agenda do site.
+ * Ex.: 12/10/2026 → 2026-10-12 a 2026-10-31.
+ */
+export function restOfMonthRange(now: Date = new Date(), timeZone: string = AGENDA_TIME_ZONE): DateRange {
+  return { from: agendaNow(now, timeZone).date, to: currentMonthRange(now, timeZone).to };
 }
 
 /** Intervalo do período que contém `reference`. Semana = ISO (segunda a domingo), igual ao SQL. */

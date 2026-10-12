@@ -3,6 +3,50 @@
  * Celular (< 640px): cartão com data à esquerda e ações ocupando a largura.
  */
 
+/* Interruptor da agenda no site (PublicAgendaToggle). */
+.publicToggle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-block-end: 24px;
+  padding: 16px;
+  background: var(--panel-surface);
+  border: 1px solid var(--panel-line);
+  border-radius: var(--panel-radius);
+}
+
+.publicToggleText {
+  display: grid;
+  flex: 1 1 280px;
+  gap: 4px;
+}
+
+.publicToggleTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: var(--weight-medium);
+}
+
+.publicState {
+  padding: 1px 8px;
+  font-size: 0.6875rem;
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--panel-muted);
+  border: 1px solid currentColor;
+  border-radius: 999px;
+}
+
+.publicState[data-enabled] {
+  color: var(--panel-success);
+}
+
 .tabs {
   display: flex;
   gap: 4px;

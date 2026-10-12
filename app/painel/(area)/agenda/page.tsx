@@ -5,9 +5,11 @@ import agenda from "@/components/Painel/Agenda/Agenda.module.css";
 import { AgendaLoadError } from "@/components/Painel/Agenda/AgendaLoadError";
 import { AgendaLoading } from "@/components/Painel/Agenda/AgendaLoading";
 import { AgendaView } from "@/components/Painel/Agenda/AgendaView";
+import { PublicAgendaToggle } from "@/components/Painel/Agenda/PublicAgendaToggle";
 import styles from "@/components/Painel/Painel.module.css";
 import { agendaNow } from "@/lib/agenda/dates";
 import { listTeamNames } from "@/lib/agenda/profilesRepository";
+import { getAgendaPublicEnabled } from "@/lib/agenda/settingsRepository";
 import type { Show } from "@/lib/agenda/types";
 import { AGENDA_FILTERS, DEFAULT_AGENDA_FILTER, listAgenda, parseAgendaFilter, type AgendaFilter } from "@/lib/painel/agenda";
 import { PANEL_ROUTES } from "@/lib/painel/routes";
@@ -31,6 +33,10 @@ export default async function AgendaPage({ searchParams }: PageProps<"/painel/ag
         <p className={styles.pageLead}>Shows da dupla: passados, próximos e excluídos.</p>
       </header>
 
+      <Suspense fallback={null}>
+        <PublicAgendaSetting />
+      </Suspense>
+
       <nav className={agenda.tabs} aria-label="Filtrar shows">
         {(Object.keys(AGENDA_FILTERS) as AgendaFilter[]).map((key) => (
           <Link
@@ -51,6 +57,25 @@ export default async function AgendaPage({ searchParams }: PageProps<"/painel/ag
       </Suspense>
     </>
   );
+}
+
+/** Interruptor da agenda no site. Sem a configuração, a lista continua funcionando. */
+async function PublicAgendaSetting() {
+  const client = await createSupabaseServerClient();
+  let enabled: boolean | null = null;
+  try {
+    enabled = await getAgendaPublicEnabled(client);
+  } catch (error) {
+    console.error("[agenda] falha ao carregar a configuração do site", error);
+  }
+  if (enabled === null) {
+    return (
+      <p role="alert" className={`${styles.alert} ${styles.alertError} ${styles.notice}`}>
+        Não foi possível carregar a opção “Agenda no site”. Recarregue a página para tentar de novo.
+      </p>
+    );
+  }
+  return <PublicAgendaToggle enabled={enabled} />;
 }
 
 async function AgendaData({ filter }: { filter: AgendaFilter }) {

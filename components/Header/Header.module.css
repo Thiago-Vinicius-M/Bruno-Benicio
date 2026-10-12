@@ -47,8 +47,9 @@
 }
 
 /*
- * O grupo da direita tem menos links (2 × 3): com space-between eles iriam para as pontas,
- * com um vão grande no meio. space-evenly mantém o ritmo próximo ao do grupo da esquerda.
+ * Sem a agenda, o grupo da direita tem menos links (2 × 3): com space-between eles iriam
+ * para as pontas, com um vão grande no meio. space-evenly mantém o ritmo próximo ao do
+ * grupo da esquerda. Com a AGENDA (3 × 3) os dois grupos usam space-between.
  */
 .listEnd {
   justify-content: space-evenly;
