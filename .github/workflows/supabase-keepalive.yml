@@ -1,0 +1,138 @@
+# Consulta diária de leitura no Supabase para reduzir o risco de pausa por inatividade
+# (plano Free). NÃO grava nada, NÃO reativa um projeto já pausado e NÃO garante
+# disponibilidade: se o projeto estiver pausado, a execução falha com aviso claro.
+#
+# Consulta: GET /rest/v1/rpc/get_public_agenda?p_from=<hoje>&p_to=<hoje>&select=id&limit=1
+#   - a mesma função que o site público usa (lê public.shows, só colunas públicas);
+#   - via GET o PostgREST roda a função numa transação READ ONLY;
+#   - devolve no máximo 1 id; o log mostra só a quantidade de linhas, nunca os dados.
+#
+# Secrets (GitHub → repositório → Settings → Secrets and variables → Actions →
+# New repository secret), com os mesmos valores do .env.local / Vercel:
+#   NEXT_PUBLIC_SUPABASE_URL              https://<ref>.supabase.co
+#   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY  sb_publishable_... (ou a anon key legada)
+# A secret key / service_role NÃO é usada e é recusada se cadastrada por engano.
+#
+# Execução manual: aba Actions → "Supabase keep-alive" → Run workflow.
+
+name: Supabase keep-alive
+
+on:
+  schedule:
+    # 06:17 UTC = 03:17 em Brasília (UTC-3). Minuto "quebrado" para fugir do pico do
+    # início da hora; o GitHub ainda pode atrasar ou, em raros casos, pular a execução.
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+# Não faz checkout nem usa a API do GitHub: o GITHUB_TOKEN não recebe permissão alguma.
+permissions: {}
+
+concurrency:
+  group: supabase-keepalive
+  cancel-in-progress: false
+
+jobs:
+  keepalive:
+    name: Consulta de leitura no Supabase
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Consultar get_public_agenda (somente leitura)
+        shell: bash
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+
+          fail() { # $1 = categoria, $2 = detalhe
+            echo "::error title=Supabase keep-alive (${1})::${2}"
+            exit 1
+          }
+
+          # Secret key nova (sb_secret_) ou service_role legada (JWT com role service_role).
+          is_secret_key() {
+            local key="$1" payload
+            [[ "$key" == sb_secret_* ]] && return 0
+            [[ "$key" == *.*.* ]] || return 1
+            payload="$(cut -d. -f2 <<<"$key" | tr '_-' '/+')"
+            while (( ${#payload} % 4 )); do payload+="="; done
+            base64 -d <<<"$payload" 2>/dev/null | grep -q '"role":[[:space:]]*"service_role"'
+          }
+
+          # --- Configuração ---------------------------------------------------------
+          url="${NEXT_PUBLIC_SUPABASE_URL:-}"
+          key="${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-}"
+          if [[ -z "$url" || -z "$key" ]]; then
+            fail "configuração" "Cadastre os secrets NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY em Settings → Secrets and variables → Actions."
+          fi
+          url="${url%/}"
+          if [[ ! "$url" =~ ^https://[A-Za-z0-9.-]+$ ]]; then
+            fail "configuração" "NEXT_PUBLIC_SUPABASE_URL deve ser apenas https://<ref>.supabase.co (sem caminho nem espaços)."
+          fi
+          # O host contém o ref do projeto: mascara também ele, caso apareça em algum log.
+          echo "::add-mask::${url#https://}"
+          if is_secret_key "$key"; then
+            fail "configuração" "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY contém uma chave SECRETA. Use a publishable key (sb_publishable_...) ou a anon key e revogue/rotacione a secret exposta."
+          fi
+
+          today="$(TZ=America/Sao_Paulo date +%F)"
+          endpoint="${url}/rest/v1/rpc/get_public_agenda?p_from=${today}&p_to=${today}&select=id&limit=1"
+          body_file="$(mktemp)"
+          trap 'rm -f "$body_file"' EXIT
+
+          echo "Ferramenta: $(curl --version | sed -n 1p | cut -d' ' -f1-2)"
+          echo "Consulta: get_public_agenda (somente leitura), dia ${today} (America/Sao_Paulo)"
+
+          # --- Consulta, com no máximo 3 tentativas só para falhas temporárias -------
+          max_attempts=3
+          category="" detail=""
+          for (( attempt = 1; attempt <= max_attempts; attempt++ )); do
+            curl_exit=0
+            http_code="$(curl --silent --output "$body_file" --write-out '%{http_code}' \
+              --connect-timeout 10 --max-time 30 \
+              --header "apikey: ${key}" --header "Accept: application/json" \
+              "$endpoint" 2>/dev/null)" || curl_exit=$?
+            body="$(head -c 2000 "$body_file")"
+            pg_code="$(grep -o '"code":"[^"]*"' <<<"$body" | head -n 1 | cut -d'"' -f4 || true)"
+            echo "Tentativa ${attempt}/${max_attempts}: curl=${curl_exit} HTTP=${http_code}${pg_code:+ código=${pg_code}}"
+
+            if (( curl_exit == 0 )) && [[ "$http_code" == "200" ]]; then
+              if [[ "$body" == "[]" ]]; then rows=0
+              elif [[ "$body" == "["* ]]; then rows=1
+              else fail "resposta inesperada" "HTTP 200 sem uma lista JSON; verifique se NEXT_PUBLIC_SUPABASE_URL aponta para o projeto Supabase."
+              fi
+              echo "Sucesso: o banco respondeu à consulta (${rows} linha(s) retornada(s), limite 1)."
+              echo "Supabase keep-alive: consulta de leitura concluída com sucesso em $(date -u '+%Y-%m-%d %H:%M UTC')." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+
+            retry=false
+            if (( curl_exit == 28 )); then
+              category="timeout" detail="Sem resposta em 30 s."; retry=true
+            elif (( curl_exit != 0 )); then
+              category="falha de conexão"
+              detail="curl terminou com código ${curl_exit} (DNS/rede/TLS). Se persistir, confira a URL: um ref inexistente também não resolve."
+              retry=true
+            elif [[ "$http_code" == "540" ]] || grep -qi 'paused' <<<"$body"; then
+              fail "projeto pausado" "O Supabase informou que o projeto está pausado (HTTP ${http_code}). Esta consulta NÃO o reativa: restaure-o em supabase.com/dashboard e rode o workflow de novo."
+            elif [[ "$http_code" == "401" || "$http_code" == "403" ]]; then
+              fail "autenticação/autorização" "HTTP ${http_code}${pg_code:+ (${pg_code})}. Confira se NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY é a publishable key atual do projeto (não revogada) e se anon ainda tem EXECUTE em get_public_agenda."
+            elif [[ "$http_code" == "404" ]]; then
+              fail "configuração" "HTTP 404${pg_code:+ (${pg_code})}: função get_public_agenda não encontrada ou URL incorreta. Confira NEXT_PUBLIC_SUPABASE_URL e se a migration 20260929120000 está aplicada."
+            elif [[ "$http_code" =~ ^(408|429|5[0-9][0-9])$ ]]; then
+              category="projeto indisponível ou falha temporária"
+              detail="HTTP ${http_code}${pg_code:+ (${pg_code})}. Pode ser instabilidade, manutenção ou restrição do projeto; confira status.supabase.com e o dashboard."
+              retry=true
+            else
+              fail "resposta inesperada" "HTTP ${http_code}${pg_code:+ (${pg_code})}."
+            fi
+
+            if [[ "$retry" == true && "$attempt" -lt "$max_attempts" ]]; then
+              wait_s=$(( attempt * 20 ))
+              echo "Falha temporária (${category}); nova tentativa em ${wait_s} s."
+              sleep "$wait_s"
+            fi
+          done
+
+          fail "$category" "${detail} Desistindo após ${max_attempts} tentativas."
