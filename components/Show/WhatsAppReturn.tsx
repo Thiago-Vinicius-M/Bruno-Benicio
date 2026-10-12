@@ -49,7 +49,7 @@ export function WhatsAppReturn({
       {selected && (
         <fieldset className={styles.schedule}>
           <legend className={`type-nav ${styles.scheduleLegend}`}>
-            Data e horário do evento · opcionais
+            Data e horário do evento (opcionais)
           </legend>
           <label className={styles.scheduleField}>
             <span className={styles.scheduleLabel}>Data</span>
