@@ -1,6 +1,6 @@
 /*
- * Linha de vendedor. Lista, ações e estados vêm de Agenda.module.css (que posiciona
- * .actions pela área "actions"); selo do link de Users.module.css.
+ * Linha de vendedor. Lista, ações, estados e o selo Ativo/Inativo vêm de
+ * Agenda.module.css (que posiciona .actions pela área "actions").
  * Desktop: identidade · link · ações. Tablet: link na segunda linha. Celular: empilhado.
  */
 .row {

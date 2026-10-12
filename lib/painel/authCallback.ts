@@ -5,7 +5,7 @@ import { PANEL_ROUTES } from "./routes";
 
 /**
  * URL do callback `/auth/confirm` para links enviados por e-mail pelo Supabase Auth
- * (recuperação de senha e convite). Precisa estar na allow list do Supabase:
+ * (recuperação de senha). Precisa estar na allow list do Supabase:
  * Authentication → URL Configuration → Redirect URLs (`https://<site>/auth/confirm**`).
  *
  * A origem vem da configuração (`SITE_URL` / domínio da Vercel) quando existe; os headers
@@ -31,4 +31,3 @@ async function requestOrigin(): Promise<string> {
 
 /** Depois do link, o usuário cai direto na definição de senha. */
 export const RECOVERY_NEXT = `${PANEL_ROUTES.changePassword}?recuperacao=1`;
-export const INVITE_NEXT = `${PANEL_ROUTES.changePassword}?convite=1`;

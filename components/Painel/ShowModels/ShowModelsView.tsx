@@ -15,7 +15,6 @@ import agenda from "../Agenda/Agenda.module.css";
 import { Dialog } from "../Dialog";
 import styles from "../Painel.module.css";
 import { useToast } from "../Toast";
-import users from "../Usuarios/Users.module.css";
 import videos from "../Videos/Videos.module.css";
 import css from "./ShowModels.module.css";
 import { ShowModelForm } from "./ShowModelForm";
@@ -115,7 +114,7 @@ export function ShowModelsView({ models, authors }: Props) {
                   <div className={css.info}>
                     <p className={css.name}>
                       {model.name}
-                      <span className={users.state} data-state={model.active ? "active" : "inactive"}>
+                      <span className={agenda.state} data-state={model.active ? "active" : "inactive"}>
                         {model.active ? "Ativo" : "Inativo"}
                       </span>
                     </p>

@@ -23,16 +23,6 @@ describe("panelRedirect (proxy)", () => {
     expect(panelRedirect("/painel/recuperar-senha/", true)).toBe(PANEL_ROUTES.home);
   });
 
-  it("/painel/usuarios exige sessão (o papel é checado no servidor)", () => {
-    expect(panelRedirect("/painel/usuarios", false)).toBe(PANEL_ROUTES.login);
-    expect(panelRedirect("/painel/usuarios", true)).toBeNull();
-  });
-
-  it("confirmação de link (convite) abre com ou sem sessão", () => {
-    expect(panelRedirect("/painel/confirmar", false)).toBeNull();
-    expect(panelRedirect("/painel/confirmar", true)).toBeNull();
-  });
-
   it("login e recuperação ficam abertos para visitantes (sem loop)", () => {
     expect(panelRedirect("/painel/login", false)).toBeNull();
     expect(panelRedirect("/painel/recuperar-senha", false)).toBeNull();

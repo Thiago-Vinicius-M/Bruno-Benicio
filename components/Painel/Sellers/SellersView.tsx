@@ -14,7 +14,6 @@ import agenda from "../Agenda/Agenda.module.css";
 import { Dialog } from "../Dialog";
 import styles from "../Painel.module.css";
 import { useToast } from "../Toast";
-import users from "../Usuarios/Users.module.css";
 import { SellerForm } from "./SellerForm";
 import css from "./Sellers.module.css";
 
@@ -116,7 +115,7 @@ export function SellersView({ sellers, siteOrigin }: Props) {
                 <div className={css.identity}>
                   <p className={css.name}>
                     {seller.name}
-                    <span className={users.state} data-state={seller.active ? "active" : "inactive"}>
+                    <span className={agenda.state} data-state={seller.active ? "active" : "inactive"}>
                       {seller.active ? "Link ativo" : "Link desativado"}
                     </span>
                   </p>

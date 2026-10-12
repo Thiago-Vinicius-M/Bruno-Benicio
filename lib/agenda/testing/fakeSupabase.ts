@@ -38,12 +38,6 @@ export function createFakeSupabase(responses: Response[] = []) {
     getUser: vi.fn(),
     resetPasswordForEmail: vi.fn(),
     updateUser: vi.fn(),
-    admin: {
-      inviteUserByEmail: vi.fn(),
-      updateUserById: vi.fn(),
-      deleteUser: vi.fn(),
-      listUsers: vi.fn(),
-    },
   };
 
   const client = {
