@@ -7,7 +7,8 @@ import { formatPrice } from "@/lib/showModels/price";
 import type { CommercialShowModel, PublicShowModel, ShowModelsState } from "@/lib/showModels/types";
 import { SHOW_INCLUDES, SHOW_REPERTOIRE } from "./showContent";
 import { SHOW_REVEAL } from "./showReveal";
-import { useCommercialAccess, useSellerCode, useWhatsAppReturn, type CommercialState } from "./useWhatsAppReturn";
+import { hidesDirectContact, useCommercial } from "./commercialContext";
+import { useWhatsAppReturn, type CommercialState } from "./useWhatsAppReturn";
 import { WhatsAppReturn } from "./WhatsAppReturn";
 import styles from "./Show.module.css";
 
@@ -41,8 +42,10 @@ function commercialNotice(access: CommercialState): string | null {
  */
 export function Show({ models }: { models: ShowModelsState }) {
   const stageRef = useRef<HTMLDivElement>(null);
-  const sellerCode = useSellerCode();
-  const access = useCommercialAccess(sellerCode);
+  const commercialState = useCommercial();
+  const { sellerCode, access } = commercialState;
+  // Proposta comercial: CONTATO sai da página e NOSSO SHOW passa a ser a última seção.
+  const isLast = hidesDirectContact(commercialState);
   const whatsapp = useWhatsAppReturn();
 
   // Sem código de vendedor: site público, sem título nem formatos.
@@ -94,6 +97,7 @@ export function Show({ models }: { models: ShowModelsState }) {
     <section
       id="nosso-show"
       className={styles.show}
+      data-last={isLast || undefined}
       aria-labelledby={showFormats ? "nosso-show-title" : undefined}
       aria-label={showFormats ? undefined : "Nosso show"}
     >

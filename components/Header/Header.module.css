@@ -99,6 +99,87 @@
 }
 
 /*
+ * Instagram (link externo): pílula com borda no canto direito, separada da navegação —
+ * minúsculas e ícone, para não ser confundida com os títulos de seção (maiúsculas, sem caixa).
+ */
+.instagram {
+  position: absolute;
+  top: 50%;
+  right: var(--page-gutter);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding-inline: 12px 14px;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: var(--weight-medium);
+  color: var(--color-foreground);
+  background: rgb(255 255 255 / 0.04);
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 10px;
+  transform: translateY(-50%);
+  transition:
+    color 0.25s ease,
+    border-color 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.instagramIcon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+.instagram:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .instagram:hover {
+    color: var(--color-accent);
+    border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+    background: rgb(255 195 66 / 0.08);
+  }
+}
+
+/* Abaixo de 1680px a navegação chega perto do canto: só o ícone, em círculo. */
+@media (max-width: 1679px) {
+  .instagram {
+    width: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .instagramHandle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/*
+ * Tablet e desktop estreito: a navegação ocupa quase a largura toda; ícone menor, mais
+ * junto ao canto (a navegação não é apertada, para não encostar no logo).
+ */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .instagram {
+    right: 8px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .instagramIcon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/*
  * Menu do celular (MobileMenu.tsx): botão, overlay e gaveta. Fora do celular não existem
  * na página (display: none). Abertura/fechamento animados pelo GSAP (animations/drawer.ts);
  * aqui fica só o estado inicial FECHADO (visibility: hidden), que vale antes da hidratação.
@@ -125,6 +206,27 @@
 
   .nav {
     display: none;
+  }
+
+  /* Celular: botão redondo de vidro no canto direito, espelhando o botão de menu. */
+  .instagram {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 101;
+    width: 48px;
+    height: 48px;
+    background: rgb(24 26 32 / 0.6);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    border-color: rgb(255 255 255 / 0.12);
+    transform: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .instagramIcon {
+    width: 20px;
+    height: 20px;
   }
 
   /* Mesmo vidro escuro da topbar, para o botão ficar legível sobre qualquer seção. */
@@ -262,6 +364,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .instagram,
   .menuIcon,
   .menuIcon::before,
   .menuIcon::after {

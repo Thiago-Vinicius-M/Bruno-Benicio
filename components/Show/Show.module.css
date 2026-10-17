@@ -16,6 +16,11 @@
   padding-block-start: var(--space-2xl);
 }
 
+/* Última seção da página (proposta comercial, sem CONTATO): o mesmo respiro final do CONTATO. */
+.show[data-last] {
+  padding-block-end: var(--space-4xl);
+}
+
 .stage {
   display: grid;
   row-gap: var(--space-lg);

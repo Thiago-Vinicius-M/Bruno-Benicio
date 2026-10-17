@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/animations/gsap";
 import { createFadeSlide } from "@/animations/fadeSlide";
+import { hidesDirectContact, useCommercial } from "@/components/Show/commercialContext";
 import { CONTACT_INSTAGRAM, CONTACT_PHONES, whatsappUrl } from "./contactContent";
 import { CONTACT_REVEAL } from "./contactReveal";
 import styles from "./Contact.module.css";
@@ -10,14 +11,20 @@ import styles from "./Contact.module.css";
 /**
  * Seção CONTATO: "Contrate agora!" com os telefones — cada um abre a conversa no WhatsApp
  * com a mensagem pronta (contactContent.ts) — e o Instagram.
+ *
+ * Na proposta comercial (link válido) a seção não aparece: o contato pelo WhatsApp é o
+ * "Voltar ao WhatsApp" de quem enviou o link, e o Instagram fica no topo da página (Header).
+ * Link expirado ou desativado: seção normal.
  */
 export function Contact() {
   const stageRef = useRef<HTMLDivElement>(null);
+  const commercial = hidesDirectContact(useCommercial());
 
   // O stage é o trigger (não é animado); os alvos são marcados com data-reveal no JSX.
   useGSAP(
     () => {
-      const stage = stageRef.current!;
+      const stage = stageRef.current;
+      if (!stage) return; // proposta comercial: a seção não é renderizada
       const { cta, ...params } = CONTACT_REVEAL;
       const mm = createFadeSlide(
         stage,
@@ -26,8 +33,11 @@ export function Contact() {
       );
       return () => mm.revert();
     },
-    { dependencies: [CONTACT_REVEAL], revertOnUpdate: true },
+    { dependencies: [CONTACT_REVEAL, commercial], revertOnUpdate: true },
   );
+
+  // Proposta comercial: sem a seção (o contato é o "Voltar ao WhatsApp"; o Instagram fica no topo).
+  if (commercial) return null;
 
   return (
     <section id="contato" className={styles.contact} aria-labelledby="contato-title">

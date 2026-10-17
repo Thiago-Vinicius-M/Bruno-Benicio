@@ -34,11 +34,18 @@ function navLayout(end: NavLink[]): NavLayout {
   return { start: LINKS_START, end, all, sectionIds: all.map((link) => link.href.slice(1)) };
 }
 
+const CONTACT_HREF = "#contato";
+const WITHOUT_CONTACT = LINKS_END.filter((link) => link.href !== CONTACT_HREF);
+
 // Fora do componente: referências estáveis para o hook.
 const WITHOUT_AGENDA = navLayout(LINKS_END);
 const WITH_AGENDA = navLayout([AGENDA_LINK, ...LINKS_END]);
+// Proposta comercial: sem CONTATO (o contato é o "Voltar ao WhatsApp" de quem enviou o link).
+const WITHOUT_AGENDA_COMMERCIAL = navLayout(WITHOUT_CONTACT);
+const WITH_AGENDA_COMMERCIAL = navLayout([AGENDA_LINK, ...WITHOUT_CONTACT]);
 
-export const navFor = (agenda: boolean) => (agenda ? WITH_AGENDA : WITHOUT_AGENDA);
+export const navFor = (agenda: boolean, contact = true) =>
+  contact ? (agenda ? WITH_AGENDA : WITHOUT_AGENDA) : agenda ? WITH_AGENDA_COMMERCIAL : WITHOUT_AGENDA_COMMERCIAL;
 
 /** Navegação sem a agenda (padrão). */
 export const NAV_LINKS = WITHOUT_AGENDA.all;

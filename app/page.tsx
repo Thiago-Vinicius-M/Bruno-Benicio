@@ -9,6 +9,7 @@ import { Loader } from "@/components/Loader/Loader";
 import { Marquee } from "@/components/Marquee/Marquee";
 import { Models } from "@/components/Models/Models";
 import { Music } from "@/components/Music/Music";
+import { CommercialProvider } from "@/components/Show/commercialContext";
 import { Show } from "@/components/Show/Show";
 import { Videos } from "@/components/Videos/Videos";
 import { VideosProvider } from "@/components/Videos/videosContext";
@@ -37,22 +38,25 @@ export default async function Home() {
   return (
     <VideosProvider videos={videos}>
       <ExperienceProvider>
-        <Loader />
-        {/* data-experience-home: o que sai de cena quando uma subtela ("Ver mais") abre */}
-        <Header agenda={agenda !== null} />
-        <main data-experience-home>
-          <Hero />
-          <Marquee />
-          <About />
-          <Videos />
-          <Music />
-          {/* Só com a agenda habilitada no painel (null = desabilitada ou banco fora do ar). */}
-          {agenda && <Agenda shows={agenda.shows} now={agenda.now} />}
-          <Marquee />
-          <Models />
-          <Show models={showModels} />
-          <Contact />
-        </main>
+        {/* Uma consulta só à versão comercial, compartilhada por menu, NOSSO SHOW e CONTATO. */}
+        <CommercialProvider>
+          <Loader />
+          {/* data-experience-home: o que sai de cena quando uma subtela ("Ver mais") abre */}
+          <Header agenda={agenda !== null} />
+          <main data-experience-home>
+            <Hero />
+            <Marquee />
+            <About />
+            <Videos />
+            <Music />
+            {/* Só com a agenda habilitada no painel (null = desabilitada ou banco fora do ar). */}
+            {agenda && <Agenda shows={agenda.shows} now={agenda.now} />}
+            <Marquee />
+            <Models />
+            <Show models={showModels} />
+            <Contact />
+          </main>
+        </CommercialProvider>
       </ExperienceProvider>
     </VideosProvider>
   );
