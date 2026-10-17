@@ -15,7 +15,7 @@ vi.mock("next/navigation", () => ({
   },
 }));
 
-const { requirePanelAdmin, requirePanelUser } = await import("./session");
+const { requirePanelAdmin, requirePanelLinkCreator, requirePanelStaff, requirePanelUser } = await import("./session");
 
 const user = { id: "00000000-0000-0000-0000-000000000001" };
 
@@ -62,7 +62,7 @@ describe("requirePanelUser", () => {
   });
 });
 
-describe("requirePanelAdmin (/painel/modelos, /painel/vendedores e suas ações)", () => {
+describe("requirePanelAdmin (/painel/modelos, canais de WhatsApp e suas ações)", () => {
   it("visitante vai para o login", async () => {
     await expect(requirePanelAdmin()).rejects.toThrow("REDIRECT /painel/login");
   });
@@ -80,5 +80,26 @@ describe("requirePanelAdmin (/painel/modelos, /painel/vendedores e suas ações)
   it("ADMIN ativo passa, com o papel lido do banco", async () => {
     withSession({ id: user.id, name: "Bruno", role: "ADMIN", deactivated_at: null });
     await expect(requirePanelAdmin()).resolves.toEqual({ id: user.id, name: "Bruno", role: "ADMIN" });
+  });
+});
+
+describe("papéis por área", () => {
+  it.each([
+    ["ADMIN", true, true],
+    ["EDITOR", true, false],
+    ["SELLER", false, true],
+  ])("%s: Agenda/Vídeos=%s, Links comerciais=%s", async (role, staff, links) => {
+    withSession({ id: user.id, name: "X", role, deactivated_at: null });
+    if (staff) await expect(requirePanelStaff()).resolves.toMatchObject({ role });
+    else await expect(requirePanelStaff()).rejects.toThrow("REDIRECT /painel/acesso-negado?motivo=perfil");
+
+    withSession({ id: user.id, name: "X", role, deactivated_at: null });
+    if (links) await expect(requirePanelLinkCreator()).resolves.toMatchObject({ role });
+    else await expect(requirePanelLinkCreator()).rejects.toThrow("REDIRECT /painel/acesso-negado?motivo=perfil");
+  });
+
+  it("SELLER não passa por requirePanelAdmin", async () => {
+    withSession({ id: user.id, name: "Ana", role: "SELLER", deactivated_at: null });
+    await expect(requirePanelAdmin()).rejects.toThrow("REDIRECT /painel/acesso-negado?motivo=admin");
   });
 });

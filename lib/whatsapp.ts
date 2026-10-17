@@ -57,3 +57,8 @@ export function formatWhatsApp(digits: string): string {
 export function whatsappUrl(digits: string, message: string): string {
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
 }
+
+/** Abre o WhatsApp com a mensagem pronta para quem a pessoa escolher (sem número fixo). */
+export function whatsappShareUrl(message: string): string {
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
+}

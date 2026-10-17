@@ -18,6 +18,9 @@ function commercialNotice(access: CommercialState): string | null {
   if (access.status === "inactive") {
     return "Este link de atendimento não está mais ativo. Fale com a gente pelos contatos abaixo.";
   }
+  if (access.status === "expired") {
+    return "Esta proposta expirou e os valores não valem mais. Peça uma nova proposta a quem enviou o link.";
+  }
   if (access.status === "error") {
     return "Não foi possível carregar os valores agora. Atualize a página ou fale com a gente pelos contatos abaixo.";
   }
@@ -30,8 +33,9 @@ function commercialNotice(access: CommercialState): string | null {
  * MÚSICAS; entrada com o mesmo fade + slide.
  *
  * Duas versões:
- *   pública   → nome, duração e descrição. A página estática não contém valores.
- *   comercial → quem chegou por um link de vendedor (/r/<código>) recebe do servidor,
+ *   pública   → sem link de vendedor: só repertório e estrutura (sem o título NOSSO SHOW
+ *               nem os formatos), logo depois de "EAI, GOSTOU?".
+ *   comercial → quem chegou por um link comercial (/p/<código>) recebe do servidor,
  *               depois de o código ser conferido no banco, os valores e a escolha do
  *               formato, com data/horário opcionais e o "Voltar ao WhatsApp" desse vendedor.
  */
@@ -41,6 +45,8 @@ export function Show({ models }: { models: ShowModelsState }) {
   const access = useCommercialAccess(sellerCode);
   const whatsapp = useWhatsAppReturn();
 
+  // Sem código de vendedor: site público, sem título nem formatos.
+  const showFormats = sellerCode !== null;
   const commercial = access.status === "commercial";
   const list: (PublicShowModel | CommercialShowModel)[] = commercial
     ? access.models
@@ -70,7 +76,7 @@ export function Show({ models }: { models: ShowModelsState }) {
       );
       return () => mm.revert();
     },
-    { dependencies: [SHOW_REVEAL, listKey], revertOnUpdate: true },
+    { dependencies: [SHOW_REVEAL, listKey, showFormats], revertOnUpdate: true },
   );
 
   const packageContent = (item: PublicShowModel | CommercialShowModel): ReactNode => (
@@ -85,18 +91,22 @@ export function Show({ models }: { models: ShowModelsState }) {
   );
 
   return (
-    <section id="nosso-show" className={styles.show} aria-labelledby="nosso-show-title">
+    <section
+      id="nosso-show"
+      className={styles.show}
+      aria-labelledby={showFormats ? "nosso-show-title" : undefined}
+      aria-label={showFormats ? undefined : "Nosso show"}
+    >
       <div ref={stageRef} className={`container-narrow ${styles.stage}`}>
-        <header className={styles.intro}>
-          <h2 id="nosso-show-title" className="type-title" data-reveal="heading">
-            NOSSO SHOW
-          </h2>
-          <p className={`type-nav ${styles.eyebrow}`} data-reveal="heading">
-            Orçamento de shows
-          </p>
-        </header>
+        {showFormats && (
+          <header className={styles.intro}>
+            <h2 id="nosso-show-title" className="type-title" data-reveal="heading">
+              NOSSO SHOW
+            </h2>
+          </header>
+        )}
 
-        {list.length > 0 ? (
+        {!showFormats ? null : list.length > 0 ? (
           <div className={styles.choice}>
             {/* Formatos: nome + duração à esquerda; na versão comercial, preço à direita (estilo setlist). */}
             <ul className={styles.packages} aria-label="Formatos de show">

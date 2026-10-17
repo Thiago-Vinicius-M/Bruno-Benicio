@@ -12,7 +12,7 @@ import {
   type VideoActionResult,
 } from "@/lib/painel/videos";
 import { PANEL_ROUTES } from "@/lib/painel/routes";
-import { requirePanelUser } from "@/lib/painel/session";
+import { requirePanelStaff } from "@/lib/painel/session";
 import type { AgendaClient } from "@/lib/supabase/client";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -24,7 +24,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
  */
 
 async function withSession(operation: (client: AgendaClient) => Promise<VideoActionResult>) {
-  await requirePanelUser();
+  await requirePanelStaff();
   const result = await operation(await createSupabaseServerClient());
   if (result.status === "success") {
     revalidatePath(PANEL_ROUTES.videos);

@@ -17,10 +17,6 @@ const MESSAGES: Record<InvalidLinkReason, { title: string; text: string }> = {
     title: "Link não encontrado",
     text: "Não encontramos este link de atendimento. Peça um novo link a quem enviou.",
   },
-  inativo: {
-    title: "Link desativado",
-    text: "Este link de atendimento não está mais ativo. Peça um novo link a quem enviou ou fale com a gente pelos contatos do site.",
-  },
   indisponivel: {
     title: "Não foi possível abrir o link",
     text: "Tivemos um problema para verificar este link agora. Tente abrir de novo em instantes.",
@@ -28,7 +24,7 @@ const MESSAGES: Record<InvalidLinkReason, { title: string; text: string }> = {
 };
 
 /**
- * Destino dos links comerciais (/r/<código>) que não puderam ser usados. Não associa
+ * Destino dos links comerciais (/p/<código>) que não puderam ser abertos. Não associa
  * nenhum vendedor: oferece o site e os contatos públicos.
  */
 export default async function InvalidLinkPage({ searchParams }: PageProps<"/link-invalido">) {

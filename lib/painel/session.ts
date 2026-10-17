@@ -2,7 +2,8 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { resolvePanelAccess, type PanelUser } from "./access";
+import type { Role } from "@/lib/agenda/types";
+import { LINK_CREATOR_ROLES, resolvePanelAccess, STAFF_ROLES, type PanelUser } from "./access";
 import { PANEL_ROUTES } from "./routes";
 
 /**
@@ -35,3 +36,15 @@ export async function requirePanelAdmin(): Promise<PanelUser> {
   if (user.role !== "ADMIN") redirect(`${PANEL_ROUTES.accessDenied}?motivo=admin`);
   return user;
 }
+
+async function requirePanelRole(roles: readonly Role[]): Promise<PanelUser> {
+  const user = await requirePanelUser();
+  if (!roles.includes(user.role)) redirect(`${PANEL_ROUTES.accessDenied}?motivo=perfil`);
+  return user;
+}
+
+/** Agenda e Vídeos: ADMIN e EDITOR. O vendedor (SELLER) não entra. */
+export const requirePanelStaff = () => requirePanelRole(STAFF_ROLES);
+
+/** Links comerciais: ADMIN e SELLER (o EDITOR não cria links). */
+export const requirePanelLinkCreator = () => requirePanelRole(LINK_CREATOR_ROLES);

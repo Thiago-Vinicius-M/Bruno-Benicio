@@ -45,7 +45,7 @@ export async function createTestDb(): Promise<PGlite> {
 export async function createUser(
   db: PGlite,
   email: string,
-  role?: "ADMIN" | "EDITOR",
+  role?: "ADMIN" | "EDITOR" | "SELLER",
 ): Promise<string> {
   const { rows } = await db.query<{ id: string }>(
     "insert into auth.users (email) values ($1) returning id",

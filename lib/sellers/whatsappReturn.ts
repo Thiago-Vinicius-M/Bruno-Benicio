@@ -6,11 +6,13 @@ import type { AgendaClient } from "@/lib/supabase/client";
 import { isValidWhatsApp, whatsappUrl } from "@/lib/whatsapp";
 import { isSellerCode } from "./sellerLink";
 import { getSellerLink } from "./sellersRepository";
+import type { SellerLink } from "./types";
 
 /**
- * "Voltar ao WhatsApp" (seção NOSSO SHOW). Roda no servidor: o destino vem do cadastro
- * do vendedor do link (cookie), nunca do navegador; nome e valor vêm do banco (versão
- * comercial, que só responde para vendedor ativo) e precisam ser os mesmos que o
+ * "Voltar ao WhatsApp" (seção NOSSO SHOW). Roda no servidor: o destino vem do WhatsApp
+ * gravado no link do cookie (ou do redirecionamento definido pelo ADMIN), nunca do
+ * navegador; nome e valor vêm do banco (versão comercial, que só responde para link ativo
+ * e dentro da validade, com o preço gravado nele) e precisam ser os mesmos que o
  * contratante viu. Data e horário são opcionais e validados. Sem tudo válido, não há URL.
  */
 
@@ -19,6 +21,7 @@ export type WhatsAppReturnProblem =
   | "invalid-schedule"
   | "no-seller"
   | "seller-inactive"
+  | "link-expired"
   | "model-unavailable"
   | "model-changed"
   | "unavailable";
@@ -33,6 +36,8 @@ export const WHATSAPP_RETURN_MESSAGES: Record<WhatsAppReturnProblem, string> = {
   "no-seller":
     "Não identificamos o atendimento deste acesso. Abra novamente o link que você recebeu ou fale com a gente pelos contatos abaixo.",
   "seller-inactive": "Este link de atendimento não está mais ativo. Fale com a gente pelos contatos abaixo.",
+  "link-expired":
+    "Esta proposta expirou e os valores não valem mais. Peça uma nova proposta a quem enviou o link.",
   "model-unavailable": "Este formato não está mais disponível. Atualize a página para ver os formatos atuais.",
   "model-changed": "Este formato foi atualizado. Atualize a página para ver o nome e o valor atuais.",
   unavailable: "Não foi possível preparar a mensagem agora. Tente novamente em instantes.",
@@ -94,14 +99,38 @@ export async function prepareWhatsAppReturn(
     return fail("unavailable");
   }
 
-  if (!seller?.active || !isValidWhatsApp(seller.whatsapp)) return fail("seller-inactive");
+  const blocked = linkProblem(seller);
+  if (blocked || !seller?.whatsapp) return fail(blocked ?? "seller-inactive");
 
   const model = models.find((item) => item.id === request.modelId);
-  if (!model) return fail("model-unavailable");
-  if (model.name !== request.name || toCents(model.price) !== toCents(request.price)) return fail("model-changed");
+  const problem: WhatsAppReturnProblem | null = !model
+    ? "model-unavailable"
+    : model.name !== request.name || toCents(model.price) !== toCents(request.price)
+      ? "model-changed"
+      : null;
+  if (!model || problem) {
+    // As duas leituras não são atômicas: o link temporário pode ter expirado (ou sido
+    // desativado) entre elas. Nesse caso o motivo real é o link, não o modelo.
+    try {
+      const again = linkProblem(await getSellerLink(client(), sellerCode));
+      if (again) return fail(again);
+    } catch (error) {
+      console.error("[whatsapp] falha ao reconferir o link", error);
+      return fail("unavailable");
+    }
+    return fail(problem ?? "model-unavailable");
+  }
 
   return {
     status: "ready",
     url: whatsappUrl(seller.whatsapp, buildContractMessage(model, { date: request.date, time: request.time })),
   };
+}
+
+/** Link que não libera a operação comercial: expirado ou inativo (por qualquer motivo). */
+function linkProblem(seller: SellerLink | null): WhatsAppReturnProblem | null {
+  if (seller?.status === "expired") return "link-expired";
+  if (seller?.status === "invalid") console.error("[whatsapp] link temporário sem preços");
+  if (!seller?.active || !isValidWhatsApp(seller.whatsapp)) return "seller-inactive";
+  return null;
 }

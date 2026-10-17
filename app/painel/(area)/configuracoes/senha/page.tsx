@@ -10,7 +10,7 @@ export default async function ChangePasswordPage({ searchParams }: PageProps<"/p
   const { recuperacao } = await searchParams;
   const [title, lead] = recuperacao
     ? ["Criar nova senha", "Defina a nova senha para concluir a recuperação."]
-    : ["Alterar senha", "Configurações da sua conta."];
+    : ["Alterar senha"];
 
   return (
     <>

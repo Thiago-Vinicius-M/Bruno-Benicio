@@ -4,14 +4,24 @@ import { Fragment, useRef } from "react";
 import { createFadeSlide } from "@/animations/fadeSlide";
 import { useGSAP } from "@/animations/gsap";
 import { createTextStagger } from "@/animations/textStagger";
+import { useSellerCode } from "@/components/Show/useWhatsAppReturn";
 import { MODELS_TEXT_REVEAL, MODELS_TITLE_STAGGER } from "./modelsStagger";
 import styles from "./Models.module.css";
 
 const TITLE = "EAI, GOSTOU?";
 
+/** Parágrafo do site público (sem link de vendedor). */
+const PUBLIC_TEXT =
+  "Agora que você já conhece um pouco dos Pretin mais amados do Brasil, que tal levar essa festa para o seu evento? Fale com a gente e tire todas as suas dúvidas!";
+
+/** Parágrafo da versão aberta por link comercial (/p/<código>). */
+const SELLER_TEXT =
+  "Agora que você já conhece um pouco dos Pretin mais amados do Brasil, chegou a hora de escolher o formato que mais combina com a sua festa.";
+
 export function Models() {
   const titleRef = useRef<HTMLParagraphElement>(null);
   const textRef = useRef<HTMLParagraphElement>(null);
+  const sellerCode = useSellerCode();
 
   // A frase é o trigger (não é animada); os alvos são as palavras/letras com data-stagger-target.
   useGSAP(
@@ -60,8 +70,7 @@ export function Models() {
           ))}
         </p>
         <p ref={textRef} className="type-body">
-          Agora que você já conhece um pouco dos Pretin mais amados do Brasil, chegou a hora de
-          escolher o formato que mais combina com a sua festa.
+          {sellerCode ? SELLER_TEXT : PUBLIC_TEXT}
         </p>
       </div>
     </section>

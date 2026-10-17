@@ -17,18 +17,21 @@ export type Database = {
       agenda_settings: {
         Row: {
           id: boolean
+          public_days: number
           public_enabled: boolean
           updated_at: string
           updated_by: string | null
         }
         Insert: {
           id?: boolean
+          public_days?: number
           public_enabled?: boolean
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
           id?: boolean
+          public_days?: number
           public_enabled?: boolean
           updated_at?: string
           updated_by?: string | null
@@ -45,6 +48,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          can_customize_link_prices: boolean
           created_at: string
           created_by: string | null
           deactivated_at: string | null
@@ -56,6 +60,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          can_customize_link_prices?: boolean
           created_at?: string
           created_by?: string | null
           deactivated_at?: string | null
@@ -67,6 +72,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          can_customize_link_prices?: boolean
           created_at?: string
           created_by?: string | null
           deactivated_at?: string | null
@@ -101,51 +107,103 @@ export type Database = {
           },
         ]
       }
-      sellers: {
+      seller_link_prices: {
+        Row: {
+          default_price: number | null
+          link_id: string
+          model_id: string
+          price: number
+        }
+        Insert: {
+          default_price?: number | null
+          link_id: string
+          model_id: string
+          price: number
+        }
+        Update: {
+          default_price?: number | null
+          link_id?: string
+          model_id?: string
+          price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_link_prices_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "seller_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_link_prices_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "show_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_links: {
         Row: {
           active: boolean
+          channel_id: string
+          channel_label: string
           code: string
           created_at: string
           created_by: string | null
+          deactivated_at: string | null
+          deactivated_by: string | null
+          expires_at: string
           id: string
-          name: string
-          updated_at: string
-          updated_by: string | null
+          label: string | null
           whatsapp: string
         }
         Insert: {
           active?: boolean
+          channel_id: string
+          channel_label: string
           code?: string
           created_at?: string
           created_by?: string | null
+          deactivated_at?: string | null
+          deactivated_by?: string | null
+          expires_at: string
           id?: string
-          name: string
-          updated_at?: string
-          updated_by?: string | null
+          label?: string | null
           whatsapp: string
         }
         Update: {
           active?: boolean
+          channel_id?: string
+          channel_label?: string
           code?: string
           created_at?: string
           created_by?: string | null
+          deactivated_at?: string | null
+          deactivated_by?: string | null
+          expires_at?: string
           id?: string
-          name?: string
-          updated_at?: string
-          updated_by?: string | null
+          label?: string | null
           whatsapp?: string
         }
         Relationships: [
           {
-            foreignKeyName: "sellers_created_by_fkey"
+            foreignKeyName: "seller_links_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_links_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "sellers_updated_by_fkey"
-            columns: ["updated_by"]
+            foreignKeyName: "seller_links_deactivated_by_fkey"
+            columns: ["deactivated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -426,11 +484,104 @@ export type Database = {
           },
         ]
       }
+      whatsapp_channels: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          is_primary: boolean
+          label: string
+          owner_id: string
+          redirect_channel_id: string | null
+          updated_at: string
+          updated_by: string | null
+          whatsapp: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_primary?: boolean
+          label: string
+          owner_id: string
+          redirect_channel_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          whatsapp: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_primary?: boolean
+          label?: string
+          owner_id?: string
+          redirect_channel_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          whatsapp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_channels_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_channels_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_channels_redirect_channel_id_fkey"
+            columns: ["redirect_channel_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_channels_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      create_commercial_link: {
+        Args: {
+          p_channel_id: string
+          p_expires_at: string
+          p_items: Json
+          p_label: string
+          p_validity: string
+        }
+        Returns: {
+          code: string
+          expires_at: string
+          id: string
+        }[]
+      }
+      deactivate_seller_link: { Args: { p_id: string }; Returns: undefined }
+      get_commercial_link_permissions: {
+        Args: never
+        Returns: {
+          can_create: boolean
+          can_customize_prices: boolean
+        }[]
+      }
       get_commercial_show_models: {
         Args: { p_code: string }
         Returns: {
@@ -453,6 +604,14 @@ export type Database = {
           show_count: number
         }[]
       }
+      get_link_show_models: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+          price: number
+        }[]
+      }
       get_public_agenda: {
         Args: { p_from: string; p_to: string }
         Returns: {
@@ -466,6 +625,7 @@ export type Database = {
       get_public_agenda_settings: {
         Args: never
         Returns: {
+          public_days: number
           public_enabled: boolean
         }[]
       }
@@ -501,6 +661,28 @@ export type Database = {
         Args: { p_code: string }
         Returns: {
           active: boolean
+          expires_at: string
+          link_kind: string
+          status: string
+          whatsapp: string
+        }[]
+      }
+      get_seller_links: {
+        Args: never
+        Returns: {
+          channel_id: string
+          channel_label: string
+          code: string
+          created_at: string
+          created_by: string
+          created_by_name: string
+          deactivated_at: string
+          destination: string
+          expires_at: string
+          id: string
+          label: string
+          prices: Json
+          status: string
           whatsapp: string
         }[]
       }
@@ -509,6 +691,14 @@ export type Database = {
         Returns: {
           id: string
           name: string
+        }[]
+      }
+      get_whatsapp_channel_owners: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+          role: Database["public"]["Enums"]["app_role"]
         }[]
       }
       move_show_model: {
@@ -522,7 +712,7 @@ export type Database = {
       set_main_video: { Args: { p_id: string }; Returns: undefined }
     }
     Enums: {
-      app_role: "ADMIN" | "EDITOR"
+      app_role: "ADMIN" | "EDITOR" | "SELLER"
       financial_entry_type: "CACHE" | "OTHER_REVENUE" | "EXPENSE"
       video_orientation: "landscape" | "portrait"
       video_placement: "main" | "secondary" | "gallery"
@@ -654,7 +844,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["ADMIN", "EDITOR"],
+      app_role: ["ADMIN", "EDITOR", "SELLER"],
       financial_entry_type: ["CACHE", "OTHER_REVENUE", "EXPENSE"],
       video_orientation: ["landscape", "portrait"],
       video_placement: ["main", "secondary", "gallery"],

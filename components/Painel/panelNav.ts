@@ -1,4 +1,5 @@
 import type { Role } from "@/lib/agenda/types";
+import { LINK_CREATOR_ROLES, STAFF_ROLES } from "@/lib/painel/access";
 import { PANEL_ROUTES } from "@/lib/painel/routes";
 
 export type PanelNavItem = {
@@ -6,16 +7,16 @@ export type PanelNavItem = {
   /** Sem `href`: funcionalidade ainda não disponível (exibida como "Em breve"). */
   href?: string;
   /** Visível só para esses papéis. Esconder o item é conveniência; a barreira real é o RLS. */
-  roles?: Role[];
+  roles?: readonly Role[];
 };
 
 const NAV_ITEMS: PanelNavItem[] = [
   { label: "Início", href: PANEL_ROUTES.home },
-  { label: "Agenda", href: PANEL_ROUTES.agenda },
-  { label: "Vídeos", href: PANEL_ROUTES.videos },
-  // Preços e telefones comerciais: só ADMIN.
+  { label: "Agenda", href: PANEL_ROUTES.agenda, roles: STAFF_ROLES },
+  { label: "Vídeos", href: PANEL_ROUTES.videos, roles: STAFF_ROLES },
+  // Preços padrão: só ADMIN.
   { label: "Modelos de Show", href: PANEL_ROUTES.showModels, roles: ["ADMIN"] },
-  { label: "Vendedores", href: PANEL_ROUTES.sellers, roles: ["ADMIN"] },
+  { label: "Links comerciais", href: PANEL_ROUTES.commercialLinks, roles: LINK_CREATOR_ROLES },
   { label: "Configurações", href: PANEL_ROUTES.changePassword },
 ];
 

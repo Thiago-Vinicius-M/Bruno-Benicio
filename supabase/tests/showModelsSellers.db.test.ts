@@ -6,8 +6,9 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { anon, asUser, createTestDb, createUser, pgError, runAs, superuser } from "./support/testDb";
 
 /**
- * Modelos de show e vendedores (migrations 20261012120000_show_models_sellers.sql e
+ * Modelos de show (migrations 20261012120000_show_models_sellers.sql e
  * 20261013120000_commercial_prices_video_placement.sql), direto no Postgres, como cada papel.
+ * Os vendedores antigos foram removidos (20261018120300); links: sellerLinks.db.test.ts.
  */
 
 let db: PGlite;
@@ -15,8 +16,6 @@ let adminId: string;
 let editorId: string;
 let inactiveAdminId: string;
 let outsiderId: string;
-
-const PHONE = "5562999998888";
 
 /** Modelos ativos com valor, na ordem do site (o que a versão comercial mostra). */
 const publicModels = async () =>
@@ -31,14 +30,6 @@ const modelNames = async () =>
 
 const modelId = async (name: string) =>
   (await db.query<{ id: string }>("select id from public.show_models where name = $1", [name])).rows[0].id;
-
-const insertSeller = async (name = "Carlos", whatsapp = PHONE) =>
-  (
-    await db.query<{ id: string; code: string; created_by: string | null }>(
-      "insert into public.sellers (name, whatsapp) values ($1, $2) returning id, code, created_by",
-      [name, whatsapp],
-    )
-  ).rows[0];
 
 beforeAll(async () => {
   db = await createTestDb();
@@ -77,9 +68,6 @@ describe("modelos importados do site", () => {
     });
   });
 
-  it("nenhum vendedor é criado pela migration (não há números a inventar)", async () => {
-    expect((await db.query("select 1 from public.sellers")).rows).toHaveLength(0);
-  });
 });
 
 describe("site público (anon)", () => {
@@ -94,57 +82,11 @@ describe("site público (anon)", () => {
       expect(JSON.stringify(rows)).not.toMatch(/price|1800|2200|3000/);
       expect((await pgError(db, "select price from public.show_models")).code).toBe("42501");
       expect((await pgError(db, "select * from public.show_models")).code).toBe("42501");
-      expect((await pgError(db, "select * from public.sellers")).code).toBe("42501");
       expect((await pgError(db, "update public.show_models set price = 1")).code).toBe("42501");
-      expect((await pgError(db, "insert into public.sellers (name, whatsapp) values ('x', $1)", [PHONE])).code).toBe(
-        "42501",
-      );
       expect((await pgError(db, "select public.move_show_model(gen_random_uuid(), 'up')")).code).toBe("42501");
     });
   });
 
-  it("get_commercial_show_models: preços só com o código de um vendedor ativo", async () => {
-    await runAs(db, superuser, async () => {
-      const active = await insertSeller("Comercial", PHONE);
-      const inactive = await insertSeller("Desligado", "5562977776666");
-      await db.query("update public.sellers set active = false where id = $1", [inactive.id]);
-      await db.query("update public.show_models set active = false where name = 'Voz, violão e bateria'");
-      await actAnon();
-
-      const commercial = async (code: string | null) =>
-        (
-          await db.query<{ name: string; price: string }>("select * from public.get_commercial_show_models($1)", [code])
-        ).rows.map((row) => ({ name: row.name, price: Number(row.price) }));
-
-      // Mesmos modelos ativos e ordem da versão pública, agora com o valor.
-      expect(await commercial(active.code)).toEqual([
-        { name: "Voz e violão", price: 1500 },
-        { name: "Voz, violão, sanfona e bateria", price: 2200 },
-        { name: "Bruno e Benício e banda", price: 3000 },
-      ]);
-      expect(await commercial(` ${active.code.toUpperCase()} `)).toHaveLength(3);
-      // Vendedor desativado, código inexistente, vazio ou nulo: nada.
-      for (const code of [inactive.code, "naoexiste000", "", null]) {
-        expect(await commercial(code), String(code)).toEqual([]);
-      }
-    });
-  });
-
-  it("get_seller_link: ativo devolve o WhatsApp; inativo só o status; inexistente nada", async () => {
-    await runAs(db, superuser, async () => {
-      const active = await insertSeller("Ativo", PHONE);
-      const inactive = await insertSeller("Inativo", "5562988887777");
-      await db.query("update public.sellers set active = false where id = $1", [inactive.id]);
-      await actAnon();
-
-      const link = async (code: string) => (await db.query("select * from public.get_seller_link($1)", [code])).rows;
-      expect(await link(active.code)).toEqual([{ active: true, whatsapp: PHONE }]);
-      expect(await link(` ${active.code.toUpperCase()} `)).toEqual([{ active: true, whatsapp: PHONE }]);
-      expect(await link(inactive.code)).toEqual([{ active: false, whatsapp: null }]);
-      expect(await link("naoexiste000")).toEqual([]);
-      expect(await link("")).toEqual([]);
-    });
-  });
 });
 
 describe("permissões do painel", () => {
@@ -152,15 +94,11 @@ describe("permissões do painel", () => {
     for (const userId of [editorId, inactiveAdminId, outsiderId]) {
       await runAs(db, asUser(userId), async () => {
         expect((await db.query("select * from public.show_models")).rows).toHaveLength(0);
-        expect((await db.query("select * from public.sellers")).rows).toHaveLength(0);
         const insertModel = await pgError(
           db,
           "insert into public.show_models (name, duration, price) values ('x', '1h', 10)",
         );
         expect(insertModel.code).toBe("42501");
-        expect((await pgError(db, "insert into public.sellers (name, whatsapp) values ('x', $1)", [PHONE])).code).toBe(
-          "42501",
-        );
         // UPDATE sob RLS sem linhas visíveis não altera nada.
         await db.query("update public.show_models set price = 1");
       });
@@ -171,7 +109,6 @@ describe("permissões do painel", () => {
   it("ninguém exclui fisicamente (desativar preserva o histórico)", async () => {
     await runAs(db, asUser(adminId), async () => {
       expect((await pgError(db, "delete from public.show_models")).code).toBe("42501");
-      expect((await pgError(db, "delete from public.sellers")).code).toBe("42501");
     });
   });
 });
@@ -252,78 +189,9 @@ describe("modelos de show (ADMIN)", () => {
     });
   });
 
-  it("vendedor alterando o WhatsApp: o mesmo link continua liberando os valores", async () => {
-    await runAs(db, asUser(adminId), async () => {
-      const seller = await insertSeller("Troca", PHONE);
-      await db.query("update public.sellers set whatsapp = '5511987654321' where id = $1", [seller.id]);
-      expect((await db.query("select * from public.get_seller_link($1)", [seller.code])).rows).toEqual([
-        { active: true, whatsapp: "5511987654321" },
-      ]);
-      expect((await db.query("select 1 from public.get_commercial_show_models($1)", [seller.code])).rows.length).toBe(4);
-    });
-  });
 });
 
-describe("vendedores (ADMIN)", () => {
-  it("cadastro gera código único e aleatório; autoria pela sessão; código enviado é ignorado", async () => {
-    await runAs(db, asUser(adminId), async () => {
-      const a = await insertSeller("Ana", PHONE);
-      const b = await insertSeller("Bia", "5562988887777");
-      expect(a.code).toMatch(/^[0-9a-f]{12}$/);
-      expect(b.code).not.toBe(a.code);
-      expect(a.code).not.toContain("99998888");
-      expect(a.created_by).toBe(adminId);
-
-      const forged = await db.query<{ code: string }>(
-        "insert into public.sellers (name, whatsapp, code) values ('C', $1, 'escolhido123') returning code",
-        [PHONE],
-      );
-      expect(forged.rows[0].code).not.toBe("escolhido123");
-    });
-  });
-
-  it("editar nome e número não muda o código do link (nem dá para trocá-lo)", async () => {
-    await runAs(db, asUser(adminId), async () => {
-      const seller = await insertSeller("Ana", PHONE);
-      await db.query("update public.sellers set name = 'Ana Paula', whatsapp = '5511987654321', code = 'outro0000000' where id = $1", [
-        seller.id,
-      ]);
-      const { rows } = await db.query<{ code: string; whatsapp: string; name: string }>(
-        "select code, whatsapp, name from public.sellers where id = $1",
-        [seller.id],
-      );
-      expect(rows[0]).toEqual({ code: seller.code, whatsapp: "5511987654321", name: "Ana Paula" });
-    });
-  });
-
-  it("WhatsApp só em formato internacional normalizado (o banco repete a validação)", async () => {
-    await runAs(db, asUser(adminId), async () => {
-      const bad = (whatsapp: string) =>
-        pgError(db, "insert into public.sellers (name, whatsapp) values ('x', $1)", [whatsapp]);
-      for (const whatsapp of ["+5562999998888", "(62) 99999-8888", "62999998888x", "556299999888", "5562899998888", "0562999998888"]) {
-        expect((await bad(whatsapp)).code, whatsapp).toBe("23514");
-      }
-      await insertSeller("Fixo", "556232223333");
-      await insertSeller("Portugal", "351912345678");
-    });
-  });
-
-  it("desativar invalida o link; reativar volta a funcionar com o mesmo código", async () => {
-    await runAs(db, asUser(adminId), async () => {
-      const seller = await insertSeller("Ana", PHONE);
-      await db.query("update public.sellers set active = false where id = $1", [seller.id]);
-      expect((await db.query("select * from public.get_seller_link($1)", [seller.code])).rows).toEqual([
-        { active: false, whatsapp: null },
-      ]);
-      await db.query("update public.sellers set active = true where id = $1", [seller.id]);
-      expect((await db.query("select * from public.get_seller_link($1)", [seller.code])).rows).toEqual([
-        { active: true, whatsapp: PHONE },
-      ]);
-    });
-  });
-});
-
-/** Dentro de uma transação já aberta por runAs: passa a agir como anon. */
+/** Troca o papel da transação atual para anon (como o PostgREST faria). */
 async function actAnon() {
   await db.exec("reset role");
   await db.query("select set_config('request.jwt.claim.sub', '', true)");

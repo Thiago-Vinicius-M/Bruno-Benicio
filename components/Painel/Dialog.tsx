@@ -6,19 +6,22 @@ import styles from "./Painel.module.css";
 /**
  * Modal do painel sobre o `<dialog>` nativo: foco preso, Esc e fundo inerte vêm do
  * navegador. O conteúdo só é montado aberto (formulários sempre começam limpos).
- * `busy` impede fechar no meio de uma operação.
+ * `busy` impede fechar no meio de uma operação. `wide`: mais largo no desktop (formulários
+ * longos); no celular e no tablet o tamanho é o mesmo.
  */
 export function Dialog({
   open,
   title,
   onClose,
   busy = false,
+  wide = false,
   children,
 }: {
   open: boolean;
   title: string;
   onClose: () => void;
   busy?: boolean;
+  wide?: boolean;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -40,6 +43,7 @@ export function Dialog({
     <dialog
       ref={ref}
       className={styles.dialog}
+      data-wide={wide || undefined}
       aria-labelledby={titleId}
       onCancel={(event) => {
         event.preventDefault(); // Esc: fecha pelo estado do React, não por fora dele.

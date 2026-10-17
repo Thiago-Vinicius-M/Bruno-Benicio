@@ -44,6 +44,38 @@ export function agendaNow(now: Date = new Date(), timeZone: string = AGENDA_TIME
   return { date: `${get("year")}-${get("month")}-${get("day")}`, time: `${get("hour")}:${get("minute")}` };
 }
 
+/** Relógio de parede de `instant` no fuso, como se fosse UTC (ms). Base da conversão abaixo. */
+function wallClockMs(instant: number, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(instant));
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  return Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+}
+
+/**
+ * Data e hora de parede (`YYYY-MM-DD`, `HH:MM`) num fuso → instante absoluto. Usa a base
+ * de fusos do runtime (horário de verão incluído): 20/10/2026 18:00 em São Paulo →
+ * 2026-10-20T21:00:00Z. Inválido ou inexistente no fuso (pulo do horário de verão) → null.
+ */
+export function zonedTimeToInstant(date: string, time: string, timeZone: string = AGENDA_TIME_ZONE): Date | null {
+  if (!isIsoDate(date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return null;
+  const [year, month, day] = date.split("-").map(Number);
+  const [hour, minute] = time.split(":").map(Number);
+  const wall = Date.UTC(year, month - 1, day, hour, minute);
+  // Duas passadas: o deslocamento no palpite pode diferir do deslocamento no resultado.
+  let instant = wall - (wallClockMs(wall, timeZone) - wall);
+  instant = wall - (wallClockMs(instant, timeZone) - instant);
+  return wallClockMs(instant, timeZone) === wall ? new Date(instant) : null;
+}
+
 /** Primeiro e último dia do mês corrente. Ex.: 29/09/2026 → 2026-09-01 a 2026-09-30. */
 export function currentMonthRange(now: Date = new Date(), timeZone: string = AGENDA_TIME_ZONE): DateRange {
   return periodRange("month", now, timeZone);

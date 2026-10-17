@@ -75,8 +75,8 @@ export async function getPublicShowModels(client: AgendaClient): Promise<PublicS
 }
 
 /**
- * Versão comercial: modelos ativos com o valor, só para o código de um vendedor ativo
- * (o banco confere). Código inválido ou vendedor inativo → lista vazia.
+ * Versão comercial: modelos e valores gravados num link válido (o banco confere).
+ * Código inválido, expirado, desativado ou sem WhatsApp → lista vazia.
  */
 export async function getCommercialShowModels(client: AgendaClient, sellerCode: string): Promise<CommercialShowModel[]> {
   const { data, error } = await client.rpc("get_commercial_show_models", { p_code: sellerCode });

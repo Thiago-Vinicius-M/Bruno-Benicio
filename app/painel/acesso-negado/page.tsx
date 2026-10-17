@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Acesso negado" };
 /**
  * Dois casos, sempre decididos pelo estado real no banco (a URL só escolhe o texto):
  * - sessão sem perfil ativo: oferece sair (sem voltar ao login, evitando loop);
- * - perfil ativo sem papel suficiente (`?motivo=admin`): oferece voltar ao painel.
+ * - perfil ativo sem papel suficiente (`?motivo=admin` ou `?motivo=perfil`): oferece voltar ao painel.
  */
 export default async function AccessDeniedPage({ searchParams }: PageProps<"/painel/acesso-negado">) {
   const access = await getPanelAccess();
@@ -21,9 +21,13 @@ export default async function AccessDeniedPage({ searchParams }: PageProps<"/pai
 
   if (access.status === "granted") {
     const { motivo } = await searchParams;
-    if (motivo !== "admin" || access.user.role === "ADMIN") redirect(PANEL_ROUTES.home);
+    if (motivo === "admin" && access.user.role === "ADMIN") redirect(PANEL_ROUTES.home);
+    if (motivo !== "admin" && motivo !== "perfil") redirect(PANEL_ROUTES.home);
     return (
-      <AuthCard title="Acesso negado" lead="Esta área é exclusiva para administradores.">
+      <AuthCard
+        title="Acesso negado"
+        lead={motivo === "admin" ? "Esta área é exclusiva para administradores." : "Seu perfil não tem acesso a esta área."}
+      >
         <Link href={PANEL_ROUTES.home} className={styles.button}>
           Voltar ao painel
         </Link>

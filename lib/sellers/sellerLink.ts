@@ -1,26 +1,28 @@
 /**
- * Link comercial do vendedor (/r/<código>). Módulo sem dependências de servidor: usado
- * pela rota do link, pela Server Action do WhatsApp, pelo painel e pela seção NOSSO SHOW.
+ * Link comercial (/p/<código>; /r/<código> nos antigos). Módulo sem dependências de
+ * servidor: usado pela rota do link, pela Server Action do WhatsApp, pelo painel e pela
+ * seção NOSSO SHOW.
  *
- * Regra de atribuição (determinística): só a abertura de um link /r/<código> muda o
- * vendedor. Um link válido grava o código num cookie de sessão do navegador e passa a ser
- * o destino do "Voltar ao WhatsApp" — se outro link válido for aberto depois, a navegação
- * comercial passa para esse novo vendedor. Navegar pelo site sem link nunca altera nada.
- * Um link inválido (malformado, inexistente, de vendedor desativado ou sem como conferir)
- * apaga o cookie: o visitante fica na versão pública, sem preços e sem ser encaminhado a
- * outro vendedor. O cookie guarda só o código aleatório (nada pessoal) e some quando o
- * navegador é fechado. Ele não autoriza nada sozinho: o servidor confere o código no
- * banco a cada uso.
+ * Regra de atribuição (determinística): só a abertura de um link muda a proposta da
+ * navegação. Um link válido grava o código num cookie (que dura no máximo até a expiração
+ * do link) e passa a ser o destino do "Voltar ao WhatsApp"; se outro link válido for
+ * aberto depois, a navegação comercial passa para ele. Navegar pelo site sem link nunca
+ * altera nada. Link malformado, inexistente ou sem como conferir → página de link inválido;
+ * expirado, desativado ou sem WhatsApp disponível → site público, sem preços. Nos dois
+ * casos o cookie é apagado. O cookie guarda só o código aleatório (nada pessoal) e não
+ * autoriza nada sozinho: o servidor confere o código no banco a cada uso, e os preços vêm
+ * sempre do banco para aquele código.
  */
 
 export const SELLER_COOKIE = "bb_vendedor";
 
-export const SELLER_LINK_PREFIX = "/r/";
+/** Prefixo dos links gerados. Os antigos (/r/<código>) continuam abrindo pela mesma regra. */
+export const SELLER_LINK_PREFIX = "/p/";
 
 /** Página de link inválido (`?motivo=`). */
 export const INVALID_LINK_PATH = "/link-invalido";
 
-export type InvalidLinkReason = "malformado" | "inexistente" | "inativo" | "indisponivel";
+export type InvalidLinkReason = "malformado" | "inexistente" | "indisponivel";
 
 const CODE = /^[a-z0-9]{8,32}$/;
 

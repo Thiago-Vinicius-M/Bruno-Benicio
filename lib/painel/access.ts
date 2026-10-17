@@ -39,7 +39,15 @@ export async function resolvePanelAccess(client: AgendaClient): Promise<PanelAcc
 export const ROLE_LABELS: Record<Role, string> = {
   ADMIN: "Administrador",
   EDITOR: "Editor",
+  SELLER: "Vendedor",
 };
+
+/**
+ * Papéis por área (fonte única para páginas, Server Actions e navegação). O banco repete
+ * as mesmas regras: private.is_staff() e private.can_create_links().
+ */
+export const STAFF_ROLES: readonly Role[] = ["ADMIN", "EDITOR"];
+export const LINK_CREATOR_ROLES: readonly Role[] = ["ADMIN", "SELLER"];
 
 export const DENIED_MESSAGES: Record<Extract<PanelAccess, { status: "denied" }>["reason"], string> = {
   "no-profile": "Seu usuário não tem acesso ao painel. Fale com um administrador.",

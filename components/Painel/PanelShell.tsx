@@ -6,8 +6,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { logoutAction } from "@/app/painel/actions";
 import logo from "@/Imagens/BeB LOGO FUNDO PRETO_page-0001.png";
-import { ROLE_LABELS, type PanelUser } from "@/lib/painel/access";
-import { PANEL_ROUTES } from "@/lib/painel/routes";
+import { LINK_CREATOR_ROLES, ROLE_LABELS, type PanelUser } from "@/lib/painel/access";
+import { NEW_COMMERCIAL_LINK_HREF, PANEL_ROUTES } from "@/lib/painel/routes";
 import { isActiveNavItem, panelNavFor } from "./panelNav";
 import styles from "./PanelShell.module.css";
 import { ToastProvider } from "./Toast";
@@ -51,6 +51,15 @@ export function PanelShell({ user, children }: { user: PanelUser; children: Reac
         </Link>
 
         <div className={styles.user}>
+          {/* Atalho principal de quem vende: abre o formulário de novo link de qualquer tela. */}
+          {LINK_CREATOR_ROLES.includes(user.role) && (
+            <Link href={NEW_COMMERCIAL_LINK_HREF} className={styles.newLink} aria-label="Gerar link" onClick={closeMenu}>
+              <span aria-hidden="true">+</span>
+              <span className={styles.newLinkText} aria-hidden="true">
+                Gerar link
+              </span>
+            </Link>
+          )}
           <p className={styles.userInfo}>
             <span className={styles.userName}>{user.name}</span>
             <span className={styles.userRole}>{ROLE_LABELS[user.role]}</span>

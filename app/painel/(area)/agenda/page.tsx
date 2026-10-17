@@ -13,7 +13,7 @@ import { getAgendaPublicEnabled } from "@/lib/agenda/settingsRepository";
 import type { Show } from "@/lib/agenda/types";
 import { AGENDA_FILTERS, DEFAULT_AGENDA_FILTER, listAgenda, parseAgendaFilter, type AgendaFilter } from "@/lib/painel/agenda";
 import { PANEL_ROUTES } from "@/lib/painel/routes";
-import { requirePanelUser } from "@/lib/painel/session";
+import { requirePanelStaff } from "@/lib/painel/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Agenda" };
@@ -23,7 +23,7 @@ const filterHref = (filter: AgendaFilter) =>
 
 /** Agenda administrativa (ADMIN e EDITOR). Só a tabela `shows`: nada do financeiro. */
 export default async function AgendaPage({ searchParams }: PageProps<"/painel/agenda">) {
-  await requirePanelUser();
+  await requirePanelStaff();
   const filter = parseAgendaFilter((await searchParams).filtro);
 
   return (

@@ -10,7 +10,7 @@ import type { CommercialShowModel } from "@/lib/showModels/types";
 const noSubscription = () => () => {};
 
 /**
- * Código do vendedor gravado pelo link comercial (/r/<código>), ou null. No servidor (a
+ * Código do vendedor gravado pelo link comercial (/p/<código>), ou null. No servidor (a
  * Home é estática) é sempre null; depois da hidratação vem do cookie. Persiste na
  * sessão do navegador, então sobrevive a recarregar a página e a navegar pelas seções.
  * Não autoriza nada: só indica que vale a pena pedir a versão comercial ao servidor.
@@ -21,13 +21,23 @@ export function useSellerCode(): string | null {
 
 export type CommercialState = CommercialAccess | { status: "loading" };
 
+/** Folga depois da expiração antes de perguntar de novo ao servidor (relógios diferentes). */
+const EXPIRY_RECHECK_MARGIN_MS = 1_000;
+/** Limite do setTimeout (~24,8 dias); um link dura no máximo 7. */
+const MAX_TIMEOUT_MS = 2_147_483_647;
+
 /**
  * Versão comercial de NOSSO SHOW (valores e escolha), pedida ao servidor quando há um
- * código de vendedor. Sem código: versão pública. Link desativado: a mensagem fica até a
- * página ser recarregada (o servidor já apagou o cookie).
+ * código de vendedor. Sem código: versão pública. Link desativado ou expirado: a mensagem
+ * fica até a página ser recarregada (o servidor já apagou o cookie).
+ *
+ * Link temporário: quando o prazo informado pelo servidor acaba, a versão comercial é
+ * pedida de novo; o servidor (que decide pela validade no banco) responde "expirado" e
+ * os valores saem da tela. O relógio do navegador só agenda essa nova consulta.
  */
 export function useCommercialAccess(sellerCode: string | null): CommercialState {
   const [result, setResult] = useState<{ code: string; access: CommercialAccess } | null>(null);
+  const [check, setCheck] = useState(0);
 
   useEffect(() => {
     if (!sellerCode) return;
@@ -40,9 +50,16 @@ export function useCommercialAccess(sellerCode: string | null): CommercialState 
     return () => {
       current = false;
     };
-  }, [sellerCode]);
+  }, [sellerCode, check]);
 
-  if (result?.access.status === "inactive") return result.access;
+  useEffect(() => {
+    if (result?.access.status !== "commercial" || result.access.expiresInMs === null) return;
+    const delay = Math.min(result.access.expiresInMs + EXPIRY_RECHECK_MARGIN_MS, MAX_TIMEOUT_MS);
+    const timer = setTimeout(() => setCheck((value) => value + 1), delay);
+    return () => clearTimeout(timer);
+  }, [result]);
+
+  if (result?.access.status === "inactive" || result?.access.status === "expired") return result.access;
   if (!sellerCode) return { status: "none" };
   return result?.code === sellerCode ? result.access : { status: "loading" };
 }

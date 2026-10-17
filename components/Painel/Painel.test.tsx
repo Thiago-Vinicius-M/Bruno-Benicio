@@ -25,11 +25,12 @@ describe("PanelShell", () => {
     expect(screen.getByText("Bruno")).toBeTruthy();
     expect(screen.getByText("Administrador")).toBeTruthy();
     const nav = within(screen.getByRole("navigation", { name: "Painel" }));
-    for (const label of ["Agenda", "Vídeos", "Modelos de Show", "Vendedores", "Configurações"]) {
+    for (const label of ["Agenda", "Vídeos", "Modelos de Show", "Links comerciais", "Configurações"]) {
       expect(nav.getByText(label)).toBeTruthy();
     }
     expect(nav.queryByText("Financeiro")).toBeNull();
     expect(nav.queryByText("Usuários")).toBeNull();
+    expect(nav.queryByText("Vendedores")).toBeNull();
     expect(screen.getByRole("button", { name: "Sair" })).toBeTruthy();
     expect(screen.getByText("conteúdo")).toBeTruthy();
   });
@@ -43,8 +44,35 @@ describe("PanelShell", () => {
     expect(screen.getByText("Editor")).toBeTruthy();
     const nav = within(screen.getByRole("navigation", { name: "Painel" }));
     expect(nav.queryByText("Modelos de Show")).toBeNull();
-    expect(nav.queryByText("Vendedores")).toBeNull();
+    expect(nav.queryByText("Links comerciais")).toBeNull();
     expect(nav.getByText("Agenda")).toBeTruthy();
+  });
+
+  it("vendedor (SELLER): só Início, Links comerciais e Configurações", () => {
+    render(
+      <PanelShell user={{ id: "3", name: "Ana", role: "SELLER" }}>
+        <p />
+      </PanelShell>,
+    );
+    expect(screen.getByText("Vendedor")).toBeTruthy();
+    const nav = within(screen.getByRole("navigation", { name: "Painel" }));
+    expect(nav.getAllByRole("link").map((link) => link.textContent)).toEqual(["Início", "Links comerciais", "Configurações"]);
+  });
+
+  it("atalho Gerar link no topo: ADMIN e vendedor; EDITOR não", () => {
+    const { unmount } = render(
+      <PanelShell user={{ id: "3", name: "Ana", role: "SELLER" }}>
+        <p />
+      </PanelShell>,
+    );
+    expect(screen.getByRole("link", { name: "Gerar link" }).getAttribute("href")).toBe("/painel/links?novo=1");
+    unmount();
+    render(
+      <PanelShell user={{ id: "2", name: "Thiago", role: "EDITOR" }}>
+        <p />
+      </PanelShell>,
+    );
+    expect(screen.queryByRole("link", { name: "Gerar link" })).toBeNull();
   });
 
   it("seções do menu são links para as rotas do painel", () => {
@@ -55,7 +83,7 @@ describe("PanelShell", () => {
     );
     expect(screen.getByRole("link", { name: "Agenda" }).getAttribute("href")).toBe("/painel/agenda");
     expect(screen.getByRole("link", { name: "Modelos de Show" }).getAttribute("href")).toBe("/painel/modelos");
-    expect(screen.getByRole("link", { name: "Vendedores" }).getAttribute("href")).toBe("/painel/vendedores");
+    expect(screen.getByRole("link", { name: "Links comerciais" }).getAttribute("href")).toBe("/painel/links");
   });
 
   it("menu mobile abre e fecha (inclusive com Esc)", () => {

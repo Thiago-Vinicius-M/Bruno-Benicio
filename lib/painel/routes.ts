@@ -13,11 +13,17 @@ export const PANEL_ROUTES = {
   videos: "/painel/videos",
   /** Formatos e preços da seção NOSSO SHOW. Exclusiva de ADMIN. */
   showModels: "/painel/modelos",
-  /** Vendedores e seus links comerciais. Exclusiva de ADMIN. */
-  sellers: "/painel/vendedores",
+  /** Links comerciais (ADMIN e SELLER) e, para ADMIN, os canais de WhatsApp. */
+  commercialLinks: "/painel/links",
+  /** Endereço antigo da seção Vendedores: redireciona para os links comerciais. */
+  legacySellers: "/painel/vendedores",
   /** Callback do Supabase Auth (recuperação de senha). */
   authConfirm: "/auth/confirm",
 } as const;
+
+/** Parâmetro que abre o formulário de novo link em Links comerciais (atalho do topo). */
+export const NEW_LINK_PARAM = "novo";
+export const NEW_COMMERCIAL_LINK_HREF = `${PANEL_ROUTES.commercialLinks}?${NEW_LINK_PARAM}=1`;
 
 /** Páginas acessíveis sem sessão. Um usuário logado que abre uma delas vai para o painel. */
 const GUEST_ONLY = new Set<string>([PANEL_ROUTES.login, PANEL_ROUTES.recoverPassword]);

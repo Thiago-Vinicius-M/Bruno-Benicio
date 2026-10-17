@@ -57,20 +57,22 @@ beforeEach(() => {
   action.loadCommercialShowModelsAction.mockResolvedValue({
     status: "commercial",
     models: COMMERCIAL,
+    expiresInMs: null,
   } satisfies CommercialAccess);
 });
 
 afterEach(() => setSellerCookie(null));
 
 describe("versão pública (sem link de vendedor)", () => {
-  it("formatos com duração, na ordem recebida, sem nenhum valor", () => {
+  it("sem o título NOSSO SHOW nem os formatos: só repertório e estrutura", () => {
     render(<Show models={READY} />);
-    expect(rows()).toEqual([
-      "Voz e violão2h30 de show",
-      "Voz, violão e bateria2h30 de show",
-      "Voz, violão, sanfona e bateria2h30 de show",
-      "Bruno e Benício e banda2h30 de show",
-    ]);
+    expect(screen.queryByRole("heading", { name: "NOSSO SHOW" })).toBeNull();
+    expect(screen.queryByRole("list", { name: "Formatos de show" })).toBeNull();
+    expect(screen.queryByText("Voz e violão")).toBeNull();
+    expect(screen.queryByText(/formatos de show/)).toBeNull();
+    expect(screen.getByRole("heading", { name: "Repertório" })).toBeTruthy();
+    expect(screen.getByText("Sertanejo, modão, MPB, pagode, pop rock e forró.")).toBeTruthy();
+    expect(screen.getByText("Estrutura de som e iluminação")).toBeTruthy();
     expect(document.body.textContent).not.toMatch(PRICE_TEXT);
   });
 
@@ -81,6 +83,25 @@ describe("versão pública (sem link de vendedor)", () => {
     expect(screen.queryByRole("button", { name: /Voltar ao WhatsApp/ })).toBeNull();
     expect(screen.queryAllByRole("link")).toHaveLength(0);
     expect(screen.queryByLabelText("Data")).toBeNull();
+  });
+});
+
+describe("link de vendedor, antes da resposta do servidor", () => {
+  beforeEach(() => {
+    setSellerCookie(CODE);
+    action.loadCommercialShowModelsAction.mockReturnValue(new Promise(() => {}));
+  });
+
+  it("título e formatos com duração, na ordem recebida, sem nenhum valor", () => {
+    render(<Show models={READY} />);
+    expect(screen.getByRole("heading", { name: "NOSSO SHOW" })).toBeTruthy();
+    expect(rows()).toEqual([
+      "Voz e violão2h30 de show",
+      "Voz, violão e bateria2h30 de show",
+      "Voz, violão, sanfona e bateria2h30 de show",
+      "Bruno e Benício e banda2h30 de show",
+    ]);
+    expect(document.body.textContent).not.toMatch(PRICE_TEXT);
   });
 
   it("descrição opcional aparece abaixo da duração", () => {
@@ -96,12 +117,6 @@ describe("versão pública (sem link de vendedor)", () => {
 
     render(<Show models={{ status: "ready", models: [] }} />);
     expect(screen.getByText(/Consulte os formatos de show disponíveis/)).toBeTruthy();
-  });
-
-  it("repertório e estrutura continuam na seção", () => {
-    render(<Show models={READY} />);
-    expect(screen.getByText("Sertanejo, modão, MPB, pagode, pop rock e forró.")).toBeTruthy();
-    expect(screen.getByText("Estrutura de som e iluminação")).toBeTruthy();
   });
 });
 
@@ -260,6 +275,56 @@ describe("versão comercial recusada pelo servidor", () => {
     expect(document.body.textContent).not.toMatch(PRICE_TEXT);
     expect(screen.queryAllByRole("radio")).toHaveLength(0);
     expect(rows()).toHaveLength(4);
+  });
+
+  it("link temporário expirado: aviso para pedir nova proposta, versão pública sem valores", async () => {
+    action.loadCommercialShowModelsAction.mockResolvedValue({ status: "expired" } satisfies CommercialAccess);
+    render(<Show models={READY} />);
+    expect(await screen.findByText(/Esta proposta expirou/)).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(PRICE_TEXT);
+    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    expect(rows()).toHaveLength(4);
+  });
+
+  it("link temporário expira com a página aberta: o servidor é consultado de novo e os valores saem", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      action.loadCommercialShowModelsAction
+        .mockResolvedValueOnce({ status: "commercial", models: COMMERCIAL, expiresInMs: 60_000 } satisfies CommercialAccess)
+        .mockResolvedValueOnce({ status: "expired" } satisfies CommercialAccess);
+      action.prepareWhatsAppAction.mockResolvedValue({ status: "ready", url: WA_URL });
+      render(<Show models={READY} />);
+      await act(async () => {});
+      fireEvent.click(screen.getByRole("radio", { name: /^Voz e violão / }));
+      await act(async () => vi.advanceTimersByTime(0));
+      expect(screen.getByRole("link", { name: /Voltar ao WhatsApp/ })).toBeTruthy();
+
+      // Antes do prazo: nada muda.
+      await act(async () => vi.advanceTimersByTime(59_000));
+      expect(action.loadCommercialShowModelsAction).toHaveBeenCalledTimes(1);
+
+      await act(async () => vi.advanceTimersByTime(2_000));
+      expect(action.loadCommercialShowModelsAction).toHaveBeenCalledTimes(2);
+      expect(screen.getByText(/Esta proposta expirou/)).toBeTruthy();
+      expect(screen.queryAllByRole("link")).toHaveLength(0);
+      expect(screen.queryAllByRole("radio")).toHaveLength(0);
+      expect(document.body.textContent).not.toMatch(PRICE_TEXT);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("link permanente: não agenda nova consulta", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      render(<Show models={READY} />);
+      await act(async () => {});
+      await act(async () => vi.advanceTimersByTime(8 * 86_400_000));
+      expect(action.loadCommercialShowModelsAction).toHaveBeenCalledTimes(1);
+      expect(screen.getAllByRole("radio")).toHaveLength(4);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("banco fora do ar (ou falha de rede): aviso e versão pública", async () => {

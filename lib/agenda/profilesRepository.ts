@@ -4,7 +4,7 @@ import { AgendaError, toAgendaError } from "./errors";
 import type { Profile, Role } from "./types";
 
 export const PROFILE_COLUMNS =
-  "id, name, role, deactivated_at, deactivated_by, created_by, updated_by, created_at, updated_at";
+  "id, name, role, can_customize_link_prices, deactivated_at, deactivated_by, created_by, updated_by, created_at, updated_at";
 
 /**
  * Perfil do usuário logado, ou `null` se não houver sessão. Um usuário do Auth sem

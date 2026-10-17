@@ -87,6 +87,33 @@
   background: rgb(255 255 255 / 0.06);
 }
 
+/* Atalho "Gerar link" (ADMIN e vendedor): mesmo destaque do botão principal do painel. */
+.newLink {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 16px;
+  font-size: var(--panel-text-sm);
+  font-weight: var(--weight-semibold);
+  color: #181b20;
+  background: var(--color-accent);
+  border-radius: var(--panel-radius-sm);
+  white-space: nowrap;
+  transition: filter 0.15s ease;
+}
+
+.newLink:hover {
+  filter: brightness(1.08);
+}
+
+.newLink:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 .sidebar {
   grid-area: nav;
   position: sticky;
@@ -263,6 +290,17 @@ a.navLink:focus-visible,
 /* Celular: marca só com o logo, para o nome do usuário caber. */
 @media (max-width: 479px) {
   .brand span {
+    display: none;
+  }
+
+  /* Celular: só o "+", para caber ao lado do usuário e do Sair. */
+  .newLink {
+    width: 36px;
+    padding: 0;
+    font-size: 1.25rem;
+  }
+
+  .newLinkText {
     display: none;
   }
 

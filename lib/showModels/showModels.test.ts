@@ -91,8 +91,6 @@ describe("mensagem do WhatsApp", () => {
   it("intenção, nome do modelo e valor em reais", () => {
     expect(buildContractMessage({ name: "Voz, violão e bateria", price: 1800 })).toBe(
       [
-        "Olá! Acessei o portfólio do Bruno e Benício e tenho interesse em contratar a dupla.",
-        "",
         "Modelo de show escolhido: Voz, violão e bateria",
         "Valor apresentado: R$ 1.800,00",
         "",
@@ -109,8 +107,8 @@ describe("mensagem do WhatsApp", () => {
     );
     expect(lines({ date: "2026-01-01" })).toContain("Data do evento: 01/01/2026");
     expect(lines({ time: "00:00" })).toContain("Horário do evento: 00:00");
-    expect(lines({})).toHaveLength(6);
-    expect(lines({ date: "2026-01-01", time: "00:00" })).toHaveLength(8);
+    expect(lines({})).toHaveLength(4);
+    expect(lines({ date: "2026-01-01", time: "00:00" })).toHaveLength(6);
   });
 
   it("valor com centavos e espaço comum depois do R$", () => {

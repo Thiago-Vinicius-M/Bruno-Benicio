@@ -78,6 +78,6 @@ describe("acesso ao painel", () => {
   });
 
   it("labels amigáveis dos papéis", () => {
-    expect(ROLE_LABELS).toEqual({ ADMIN: "Administrador", EDITOR: "Editor" });
+    expect(ROLE_LABELS).toEqual({ ADMIN: "Administrador", EDITOR: "Editor", SELLER: "Vendedor" });
   });
 });

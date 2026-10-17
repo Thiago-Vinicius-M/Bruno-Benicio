@@ -5,7 +5,7 @@ import { LoadError } from "@/components/Painel/LoadError";
 import { VideosLoading } from "@/components/Painel/Videos/VideosLoading";
 import { VideosView } from "@/components/Painel/Videos/VideosView";
 import { listTeamNames } from "@/lib/agenda/profilesRepository";
-import { requirePanelUser } from "@/lib/painel/session";
+import { requirePanelStaff } from "@/lib/painel/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Video, VideoHomeLimits } from "@/lib/videos/types";
 import { getVideoHomeLimits, listVideos } from "@/lib/videos/videosRepository";
@@ -14,16 +14,12 @@ export const metadata: Metadata = { title: "Vídeos" };
 
 /** Vídeos do site (ADMIN e EDITOR): principal, secundários, "Ver mais" e limites da Home. */
 export default async function VideosPage() {
-  await requirePanelUser();
+  await requirePanelStaff();
 
   return (
     <>
       <header className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Vídeos</h1>
-        <p className={styles.pageLead}>
-          A Home mostra o vídeo principal e os secundários, até o limite de cada tela; o restante vai para o “Ver
-          mais”. A grade se monta sozinha a partir da ordem e do formato de cada vídeo.
-        </p>
       </header>
 
       <Suspense fallback={<VideosLoading />}>

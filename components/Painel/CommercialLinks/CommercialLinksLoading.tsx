@@ -1,9 +1,9 @@
 import agenda from "../Agenda/Agenda.module.css";
 
-export function SellersLoading() {
+export function CommercialLinksLoading() {
   return (
     <p className={agenda.state} role="status">
-      Carregando vendedores…
+      Carregando links comerciais…
     </p>
   );
 }

@@ -270,6 +270,14 @@
   box-shadow: 0 16px 48px rgb(0 0 0 / 0.45);
 }
 
+/* Formulários longos (ex.: novo link comercial): mais largos só no desktop. */
+@media (min-width: 900px) {
+  .dialog[data-wide] {
+    width: min(100% - 64px, 760px);
+    padding: 28px 32px;
+  }
+}
+
 .dialog::backdrop {
   background: rgb(0 0 0 / 0.6);
 }

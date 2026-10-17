@@ -3,11 +3,19 @@ import { normalizeSellerCode, type InvalidLinkReason } from "./sellerLink";
 import { getSellerLink } from "./sellersRepository";
 
 /**
- * Abertura do link /r/<código>: decide se o link libera a versão comercial.
- * Regra documentada em sellerLink.ts (o último link válido aberto prevalece).
+ * Abertura do link /p/<código> (ou /r/ nos antigos): decide se o link libera a versão
+ * comercial. Regra documentada em sellerLink.ts (o último link válido aberto prevalece).
+ *
+ *   ok      → associa o código até a expiração do link
+ *   public  → link expirado, desativado, sem WhatsApp ou inconsistente: site público,
+ *             sem preços (nem os negociados antes) e sem página de erro
+ *   invalid → código malformado/inexistente ou banco fora do ar: página de link inválido
  */
 
-export type LinkResolution = { status: "ok"; code: string } | { status: "invalid"; reason: InvalidLinkReason };
+export type LinkResolution =
+  | { status: "ok"; code: string; expiresAt: string | null }
+  | { status: "public" }
+  | { status: "invalid"; reason: InvalidLinkReason };
 
 export async function resolveSellerLink(
   client: AgendaClient | (() => AgendaClient),
@@ -25,6 +33,7 @@ export async function resolveSellerLink(
     return { status: "invalid", reason: "indisponivel" };
   }
   if (!seller) return { status: "invalid", reason: "inexistente" };
-  if (!seller.active) return { status: "invalid", reason: "inativo" };
-  return { status: "ok", code };
+  if (seller.active) return { status: "ok", code, expiresAt: seller.expiresAt };
+  if (seller.status === "invalid") console.error("[link comercial] link sem preços", code);
+  return { status: "public" };
 }

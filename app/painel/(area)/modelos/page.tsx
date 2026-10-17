@@ -20,10 +20,6 @@ export default async function ShowModelsPage() {
     <>
       <header className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Modelos de Show</h1>
-        <p className={styles.pageLead}>
-          Os formatos e valores da seção “Nosso show”. Só os ativos aparecem no site, nesta ordem. O valor exibido é o
-          mesmo que vai na mensagem do WhatsApp.
-        </p>
       </header>
 
       <Suspense fallback={<ShowModelsLoading />}>
