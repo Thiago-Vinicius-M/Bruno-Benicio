@@ -28,8 +28,10 @@ export type ShowModelInput = {
   /** Linha abaixo do nome (ex.: "2h30 de show"). */
   duration: string;
   description?: string | null;
-  /** Como digitado ("1.500,00") ou já numérico. */
+  /** Valor particular. Como digitado ("1.500,00") ou já numérico. */
   price: string | number;
+  /** Valor corporativo, independente do particular. */
+  corporatePrice: string | number;
   /** Só no cadastro: ativar e desativar têm uma operação própria. */
   active?: boolean;
 };

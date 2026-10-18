@@ -17,7 +17,7 @@ const NAV_ITEMS: PanelNavItem[] = [
   // Preços padrão: só ADMIN.
   { label: "Modelos de Show", href: PANEL_ROUTES.showModels, roles: ["ADMIN"] },
   { label: "Links comerciais", href: PANEL_ROUTES.commercialLinks, roles: LINK_CREATOR_ROLES },
-  { label: "Configurações", href: PANEL_ROUTES.changePassword },
+  { label: "Configurações", href: PANEL_ROUTES.settings },
 ];
 
 export const panelNavFor = (role: Role) => NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(role));

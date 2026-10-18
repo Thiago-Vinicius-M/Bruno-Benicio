@@ -4,7 +4,7 @@ import { CommercialLinksLoading } from "@/components/Painel/CommercialLinks/Comm
 import { CommercialLinksView } from "@/components/Painel/CommercialLinks/CommercialLinksView";
 import { LoadError } from "@/components/Painel/LoadError";
 import styles from "@/components/Painel/Painel.module.css";
-import { listChannelOwners, listChannels } from "@/lib/commercialLinks/channelsRepository";
+import { listChannels } from "@/lib/commercialLinks/channelsRepository";
 import { getLinkPermissions, listCommercialLinks, listLinkModels } from "@/lib/commercialLinks/linksRepository";
 import type { PanelUser } from "@/lib/painel/access";
 import { publicSiteOrigin } from "@/lib/painel/authCallback";
@@ -13,7 +13,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Links comerciais" };
 
-/** Links comerciais (ADMIN e SELLER). ADMIN também administra os canais de WhatsApp. */
+/** Links comerciais (ADMIN e SELLER). Os WhatsApp são cadastrados em Configurações (ADMIN). */
 export default async function CommercialLinksPage() {
   const user = await requirePanelLinkCreator();
 
@@ -32,7 +32,6 @@ export default async function CommercialLinksPage() {
 
 async function CommercialLinksData({ user }: { user: PanelUser }) {
   const client = await createSupabaseServerClient();
-  const isAdmin = user.role === "ADMIN";
 
   let data: [
     Awaited<ReturnType<typeof listCommercialLinks>>,
@@ -48,18 +47,13 @@ async function CommercialLinksData({ user }: { user: PanelUser }) {
   if (!data) return <LoadError message="Não foi possível carregar os links comerciais." />;
   const [links, channels, models, permissions] = data;
 
-  // Só ADMIN: donos possíveis dos canais. Sem eles, os links ainda funcionam.
-  const owners = isAdmin ? await listChannelOwners(client).catch(() => []) : [];
-
   return (
     <CommercialLinksView
       user={user}
       permissions={permissions}
       links={links}
-      // O vendedor recebe só os próprios canais (RLS); o ADMIN, todos, para administrar.
       channels={channels}
       models={models}
-      owners={owners}
       siteOrigin={await publicSiteOrigin()}
     />
   );

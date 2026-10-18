@@ -9,7 +9,7 @@ import { requirePanelUser } from "@/lib/painel/session";
 export default async function PainelHomePage() {
   const user = await requirePanelUser();
   const sections = panelNavFor(user.role).filter(
-    (item) => item.href !== PANEL_ROUTES.home && item.href !== PANEL_ROUTES.changePassword,
+    (item) => item.href !== PANEL_ROUTES.home && item.href !== PANEL_ROUTES.settings,
   );
 
   return (

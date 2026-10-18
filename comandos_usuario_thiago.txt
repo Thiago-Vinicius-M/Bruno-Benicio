@@ -1,0 +1,105 @@
+=====================================================================
+ Bruno & Benício — comandos SQL (Supabase → SQL Editor)
+ Rode um bloco de cada vez. Cada bloco é uma transação: se algo der
+ errado, nada é alterado. Para desistir no meio, troque COMMIT por ROLLBACK.
+=====================================================================
+
+
+---------------------------------------------------------------------
+ 0. CONFERIR QUEM É O "THIAGO" (rode antes; não altera nada)
+---------------------------------------------------------------------
+-- Confira o e-mail e o id. Os blocos abaixo usam o E-MAIL para
+-- não pegar outra pessoa com o mesmo nome.
+
+select u.id, u.email, p.name, p.role, p.deactivated_at
+from auth.users u
+left join public.profiles p on p.id = u.id
+where p.name ilike '%thiago%' or u.email ilike '%thiago%';
+
+
+---------------------------------------------------------------------
+ 1. LIMPAR OS DADOS COMERCIAIS DO THIAGO
+    Apaga: links comerciais que ele gerou (com os preços) e os canais
+    de WhatsApp dele. O usuário e o perfil continuam (ele ainda entra
+    no painel). IRREVERSÍVEL.
+    >>> Troque o e-mail na linha marcada. <<<
+---------------------------------------------------------------------
+
+begin;
+
+create temporary table alvo on commit drop as
+select id from auth.users
+where email = lower('EMAIL_DO_THIAGO@exemplo.com');   -- <<< TROQUE AQUI
+
+-- Conferência: deve aparecer exatamente 1 linha.
+select (select count(*) from alvo) as usuarios_encontrados,
+       (select count(*) from public.seller_links where created_by in (select id from alvo)) as links,
+       (select count(*) from public.whatsapp_channels where owner_id in (select id from alvo)) as canais;
+
+-- Links e preços (a imutabilidade é desligada só durante este bloco).
+alter table public.seller_link_prices disable trigger seller_link_prices_immutable;
+alter table public.seller_links       disable trigger seller_links_before_write;
+
+delete from public.seller_link_prices
+where link_id in (select id from public.seller_links where created_by in (select id from alvo));
+
+-- Links de qualquer pessoa que usem um canal do Thiago também precisam sair
+-- (o canal não pode ser apagado enquanto houver link apontando para ele).
+delete from public.seller_link_prices
+where link_id in (select id from public.seller_links
+                  where channel_id in (select id from public.whatsapp_channels where owner_id in (select id from alvo)));
+
+delete from public.seller_links
+where created_by in (select id from alvo)
+   or channel_id in (select id from public.whatsapp_channels where owner_id in (select id from alvo));
+
+alter table public.seller_links       enable trigger seller_links_before_write;
+alter table public.seller_link_prices enable trigger seller_link_prices_immutable;
+
+-- Canais de WhatsApp: outros canais deixam de redirecionar para os dele.
+update public.whatsapp_channels
+set redirect_channel_id = null
+where redirect_channel_id in (select id from public.whatsapp_channels where owner_id in (select id from alvo));
+
+alter table public.whatsapp_channels disable trigger whatsapp_channels_before_write;
+delete from public.whatsapp_channels where owner_id in (select id from alvo);
+alter table public.whatsapp_channels enable trigger whatsapp_channels_before_write;
+
+-- Conferência final: links e canais devem dar 0.
+select (select count(*) from public.seller_links where created_by in (select id from alvo)) as links,
+       (select count(*) from public.whatsapp_channels where owner_id in (select id from alvo)) as canais;
+
+commit;
+
+-- Observação: shows, vídeos e modelos de show que ele cadastrou NÃO são
+-- apagados (são do site, não dele). O nome dele continua só como autoria.
+
+
+---------------------------------------------------------------------
+ 2. INSERIR UM NOVO USUÁRIO
+---------------------------------------------------------------------
+-- Passo A (no Dashboard, não no SQL):
+--   Authentication → Users → Add user → Create new user
+--   Preencha e-mail e senha e MARQUE "Auto Confirm User".
+--   (Não use "Invite": o painel não aceita links de convite.)
+--
+-- Passo B (aqui no SQL Editor): crie o perfil.
+--   Papéis: 'ADMIN' (tudo), 'EDITOR' (Agenda e Vídeos), 'SELLER' (só Links comerciais).
+--   >>> Troque o nome, o e-mail e o papel nas linhas marcadas. <<<
+
+insert into public.profiles (id, name, role)
+select id,
+       'NOME DO USUÁRIO',                               -- <<< nome exibido no painel
+       'SELLER'                                         -- <<< 'ADMIN', 'EDITOR' ou 'SELLER'
+from auth.users
+where email = lower('EMAIL_DO_NOVO_USUARIO@exemplo.com')   -- <<< e-mail criado no passo A
+returning id, name, role;
+
+-- Se o resultado vier vazio, o e-mail não foi encontrado (confira o passo A).
+
+-- Opcional, só para vendedor (SELLER): permitir alterar os valores dos links.
+-- update public.profiles set can_customize_link_prices = true
+-- where id = (select id from auth.users where email = lower('EMAIL_DO_NOVO_USUARIO@exemplo.com'));
+
+-- Depois, para o vendedor criar links, um ADMIN cadastra o WhatsApp dele no
+-- painel: Links comerciais → WhatsApp dos usuários → + Novo WhatsApp.

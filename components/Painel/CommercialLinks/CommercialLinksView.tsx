@@ -7,7 +7,6 @@ import {
   deactivateCommercialLinkAction,
 } from "@/app/painel/(area)/links/actions";
 import type {
-  ChannelOwner,
   CommercialLink,
   LinkModel,
   LinkPermissions,
@@ -20,7 +19,6 @@ import agenda from "../Agenda/Agenda.module.css";
 import { Dialog } from "../Dialog";
 import styles from "../Painel.module.css";
 import { useToast } from "../Toast";
-import { ChannelsPanel } from "./ChannelsPanel";
 import css from "./CommercialLinks.module.css";
 import { LinkForm } from "./LinkForm";
 import { commercialLinkName } from "./LinkHistory";
@@ -31,11 +29,9 @@ type Props = {
   permissions: LinkPermissions;
   /** ADMIN: todos; SELLER: os próprios (filtrado pelo banco). */
   links: CommercialLink[];
-  /** ADMIN: todos (para administrar); SELLER: os próprios (RLS). */
+  /** Visíveis pelo RLS: os próprios e, para ADMIN, os que cadastrou. O formulário usa só os próprios ativos. */
   channels: WhatsAppChannel[];
   models: LinkModel[];
-  /** Só ADMIN. */
-  owners: ChannelOwner[];
   siteOrigin: string;
 };
 
@@ -44,8 +40,8 @@ const NETWORK_ERROR =
 
 /**
  * Links comerciais. Qualquer usuário com permissão (ADMIN/SELLER) cria links com um dos
- * próprios WhatsApp ativos e vê o histórico; o ADMIN também administra os WhatsApp de
- * todos. A interface só esconde o que não se aplica: as regras
+ * próprios WhatsApp ativos e vê o histórico. Os WhatsApp são cadastrados em Configurações
+ * (ADMIN). A interface só esconde o que não se aplica: as regras
  * (dono do canal, valores, quem desativa) são conferidas pelo servidor e pelo banco.
  */
 export function CommercialLinksView({
@@ -54,7 +50,6 @@ export function CommercialLinksView({
   links,
   channels,
   models,
-  owners,
   siteOrigin,
 }: Props) {
   const toast = useToast();
@@ -75,7 +70,9 @@ export function CommercialLinksView({
   const blocker = !permissions.canCreate
     ? "Seu perfil não pode criar links comerciais."
     : myChannels.length === 0
-      ? "Você ainda não tem um WhatsApp ativo cadastrado. Peça a um administrador para cadastrar o seu número."
+      ? isAdmin
+        ? "Você ainda não tem um WhatsApp ativo. Cadastre o seu número em Configurações."
+        : "Você ainda não tem um WhatsApp ativo cadastrado. Peça a um administrador para cadastrar o seu número."
       : models.length === 0
         ? "Nenhum modelo de show ativo. Ative ao menos um em Modelos de Show."
         : null;
@@ -140,8 +137,8 @@ export function CommercialLinksView({
           <span aria-hidden="true">+</span> Gerar link
         </button>
         <p className={css.ctaText}>
-          Escolha o WhatsApp e os formatos de show, revise e envie o link ao
-          cliente.
+          Escolha os formatos de show, a validade e o WhatsApp, revise e envie
+          o link ao cliente.
         </p>
       </div>
       {blocker && (
@@ -160,10 +157,6 @@ export function CommercialLinksView({
         onCopy={copyUrl}
         onDeactivate={setRevoking}
       />
-
-      {isAdmin && (
-        <ChannelsPanel channels={channels} owners={owners} busyId={busyId} pending={pending} perform={perform} />
-      )}
 
       <Dialog
         open={formOpen}

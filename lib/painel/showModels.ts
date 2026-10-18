@@ -28,6 +28,7 @@ export function parseShowModelInput(raw: unknown): ShowModelInput {
     duration: text("duration"),
     description: text("description"),
     price: typeof source.price === "number" ? source.price : text("price"),
+    corporatePrice: typeof source.corporatePrice === "number" ? source.corporatePrice : text("corporatePrice"),
     active: source.active !== false,
   };
 }

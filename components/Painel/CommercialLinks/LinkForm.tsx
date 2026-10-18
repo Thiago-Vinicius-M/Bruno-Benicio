@@ -10,7 +10,7 @@ import {
   LINK_VALIDITY_OPTIONS,
   normalizeLinkLabel,
 } from "@/lib/commercialLinks/linkInput";
-import type { LinkModel, LinkValidity, WhatsAppChannel } from "@/lib/commercialLinks/types";
+import type { LinkModel, LinkValidity, PriceTier, WhatsAppChannel } from "@/lib/commercialLinks/types";
 import type { CreateCommercialLinkResult } from "@/lib/painel/commercialLinks";
 import { formatTimestamp } from "@/lib/painel/showFormat";
 import { sellerLinkUrl } from "@/lib/sellers/sellerLink";
@@ -27,7 +27,9 @@ export type CommercialLinkFormInput = {
   validity: LinkValidity;
   date: string;
   time: string;
-  /** `price` só quando difere do padrão; ausente = preço padrão (decidido pelo banco). */
+  /** Só escolhe o valor de partida (particular ou corporativo) de cada modelo. */
+  tier: PriceTier;
+  /** `price` só quando difere do padrão do tipo; ausente = padrão do tipo (decidido pelo banco). */
   items: { modelId: string; price?: number }[];
 };
 
@@ -48,17 +50,30 @@ type Props = {
 const NETWORK_ERROR = "Não foi possível concluir a operação. Verifique a conexão e tente novamente.";
 const DAY_MS = 24 * 3_600_000;
 
+const TIER_OPTIONS: { value: PriceTier; label: string }[] = [
+  { value: "private", label: "Particular" },
+  { value: "corporate", label: "Corporativo" },
+];
+
+/** Valor padrão do modelo para o tipo de evento. */
+const tierPrice = (model: LinkModel, tier: PriceTier) => (tier === "corporate" ? model.corporatePrice : model.price);
+
+const tierPrices = (models: LinkModel[], tier: PriceTier) =>
+  Object.fromEntries(models.map((model) => [model.id, priceInputValue(tierPrice(model, tier))]));
+
 type Draft = {
   input: CommercialLinkFormInput;
   channel: WhatsAppChannel;
   lines: { name: string; price: number; custom: boolean }[];
   expiry: string;
+  tierLabel: string;
 };
 
 /**
- * Novo link comercial: 1) WhatsApp que recebe os contatos (obrigatório, só os do usuário);
- * 2) modelos e valores (começam no preço padrão; editáveis só com permissão); 3) validade
- * e identificação. Depois, revisão e geração. Valores e destino não mudam depois.
+ * Novo link comercial: 1) tipo de evento e modelos/valores (começam no padrão do tipo;
+ * editáveis só com permissão); 2) validade e identificação; 3) por último, o WhatsApp que
+ * recebe os contatos (obrigatório, só os do usuário). Depois, revisão e geração. Valores e
+ * destino não mudam depois.
  */
 export function LinkForm({ channels, models, canCustomizePrices, siteOrigin, save, onCopy, onDone, onBusyChange }: Props) {
   const id = useId();
@@ -67,9 +82,8 @@ export function LinkForm({ channels, models, canCustomizePrices, siteOrigin, sav
   const [openedAt] = useState(() => Date.now());
   const [channelId, setChannelId] = useState<string>("");
   const [selected, setSelected] = useState<Record<string, boolean>>(() => Object.fromEntries(models.map((m) => [m.id, true])));
-  const [prices, setPrices] = useState<Record<string, string>>(() =>
-    Object.fromEntries(models.map((model) => [model.id, priceInputValue(model.price)])),
-  );
+  const [tier, setTier] = useState<PriceTier>("private");
+  const [prices, setPrices] = useState<Record<string, string>>(() => tierPrices(models, "private"));
   const [validity, setValidity] = useState<LinkValidity>("24h");
   const [custom, setCustom] = useState(() => agendaNow(new Date(openedAt + DAY_MS)));
   const [label, setLabel] = useState("");
@@ -119,10 +133,8 @@ export function LinkForm({ channels, models, canCustomizePrices, siteOrigin, sav
         )}
         <dl className={css.review} aria-label="Revisão da proposta">
           <div>
-            <dt>WhatsApp que recebe os contatos</dt>
-            <dd>
-              {draft.channel.label} · {formatWhatsApp(draft.channel.whatsapp)}
-            </dd>
+            <dt>Tipo de evento</dt>
+            <dd>{draft.tierLabel}</dd>
           </div>
           <div>
             <dt>Formatos e valores</dt>
@@ -150,6 +162,12 @@ export function LinkForm({ channels, models, canCustomizePrices, siteOrigin, sav
               <dd>{normalizeLinkLabel(draft.input.label)}</dd>
             </div>
           )}
+          <div>
+            <dt>WhatsApp que recebe os contatos</dt>
+            <dd>
+              {draft.channel.label} · {formatWhatsApp(draft.channel.whatsapp)}
+            </dd>
+          </div>
         </dl>
         <p className={styles.hint}>Depois de gerado, o link não pode ser editado: para mudar algo, crie outro link.</p>
         <div className={styles.dialogActions}>
@@ -188,9 +206,6 @@ export function LinkForm({ channels, models, canCustomizePrices, siteOrigin, sav
     event.preventDefault();
     if (pending) return;
 
-    const channel = channels.find((item) => item.id === channelId);
-    if (!channel) return setError("Escolha o WhatsApp que vai receber os contatos deste link.");
-
     const chosen = models.filter((model) => selected[model.id]);
     if (chosen.length === 0) return setError("Escolha ao menos um modelo de show.");
 
@@ -211,15 +226,21 @@ export function LinkForm({ channels, models, canCustomizePrices, siteOrigin, sav
       if (!check.ok) return setError(check.message);
       expiry = `Até ${formatTimestamp(check.expiresAt.toISOString())} (horário de Brasília)`;
     }
+
+    // Último campo do formulário: conferido por último.
+    const channel = channels.find((item) => item.id === channelId);
+    if (!channel) return setError("Escolha o WhatsApp que vai receber os contatos deste link.");
     setError(undefined);
 
     const lines = chosen.map((model) => {
-      const price = canCustomizePrices ? parsePrice(prices[model.id])! : model.price;
-      return { model, price, custom: price !== model.price };
+      const standard = tierPrice(model, tier);
+      const price = canCustomizePrices ? parsePrice(prices[model.id])! : standard;
+      return { model, price, custom: price !== standard };
     });
     setDraft({
       channel,
       expiry,
+      tierLabel: TIER_OPTIONS.find((option) => option.value === tier)!.label,
       lines: lines.map(({ model, price, custom: isCustom }) => ({ name: model.name, price, custom: isCustom })),
       input: {
         channelId: channel.id,
@@ -227,6 +248,7 @@ export function LinkForm({ channels, models, canCustomizePrices, siteOrigin, sav
         validity,
         date: custom.date,
         time: custom.time,
+        tier,
         items: lines.map(({ model, price, custom: isCustom }) => (isCustom ? { modelId: model.id, price } : { modelId: model.id })),
       },
     });
@@ -244,24 +266,21 @@ export function LinkForm({ channels, models, canCustomizePrices, siteOrigin, sav
       )}
 
       <fieldset className={css.fieldset}>
-        <legend className={styles.label}>WhatsApp que recebe os contatos *</legend>
-        <div className={css.options} data-columns>
-          {channels.map((channel) => (
-            <label key={channel.id} className={css.option}>
+        <legend className={styles.label}>Tipo de evento</legend>
+        <div className={css.validity}>
+          {TIER_OPTIONS.map((option) => (
+            <label key={option.value} className={css.validityOption}>
               <input
                 type="radio"
-                name="channel"
-                value={channel.id}
-                checked={channelId === channel.id}
-                onChange={() => setChannelId(channel.id)}
+                name="tier"
+                value={option.value}
+                checked={tier === option.value}
+                onChange={() => {
+                  setTier(option.value);
+                  setPrices(tierPrices(models, option.value));
+                }}
               />
-              <span className={css.optionText}>
-                <strong>
-                  {channel.label}
-                  {channel.is_primary && <span className={css.tag}>principal</span>}
-                </strong>
-                <span className={styles.hint}>{formatWhatsApp(channel.whatsapp)}</span>
-              </span>
+              {option.label}
             </label>
           ))}
         </div>
@@ -269,11 +288,6 @@ export function LinkForm({ channels, models, canCustomizePrices, siteOrigin, sav
 
       <fieldset className={css.fieldset}>
         <legend className={styles.label}>Formatos e valores *</legend>
-        <p className={styles.hint}>
-          {canCustomizePrices
-            ? "Os valores começam no preço padrão. Alterar aqui vale só para este link."
-            : "Valores padrão dos modelos. Seu perfil não pode alterá-los."}
-        </p>
         <ul className={css.options}>
           {models.map((model) => {
             const inputId = field(`price-${model.id}`);
@@ -289,7 +303,7 @@ export function LinkForm({ channels, models, canCustomizePrices, siteOrigin, sav
                   />
                   <span className={css.optionText}>
                     <strong>{model.name}</strong>
-                    <span className={styles.hint}>Padrão: {formatPrice(model.price)}</span>
+                    <span className={styles.hint}>Padrão: {formatPrice(tierPrice(model, tier))}</span>
                   </span>
                 </label>
                 {canCustomizePrices && (
@@ -380,10 +394,31 @@ export function LinkForm({ channels, models, canCustomizePrices, siteOrigin, sav
           onChange={(event) => setLabel(event.target.value)}
           className={styles.input}
         />
-        <p id={field("label-hint")} className={styles.hint}>
-          Só aparece aqui no painel, para você reconhecer o link.
-        </p>
       </div>
+
+      <fieldset className={css.fieldset}>
+        <legend className={styles.label}>WhatsApp que recebe os contatos *</legend>
+        <div className={css.options} data-columns>
+          {channels.map((channel) => (
+            <label key={channel.id} className={css.option}>
+              <input
+                type="radio"
+                name="channel"
+                value={channel.id}
+                checked={channelId === channel.id}
+                onChange={() => setChannelId(channel.id)}
+              />
+              <span className={css.optionText}>
+                <strong>
+                  {channel.label}
+                  {channel.is_primary && <span className={css.tag}>principal</span>}
+                </strong>
+                <span className={styles.hint}>{formatWhatsApp(channel.whatsapp)}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       <div className={styles.dialogActions}>
         <button type="button" className={`${styles.button} ${styles.buttonGhost}`} onClick={() => onDone()}>

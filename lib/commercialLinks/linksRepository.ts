@@ -53,7 +53,7 @@ export async function listCommercialLinks(client: AgendaClient): Promise<Commerc
 export async function listLinkModels(client: AgendaClient): Promise<LinkModel[]> {
   const { data, error } = await client.rpc("get_link_show_models");
   if (error) throw toAgendaError(error, "Não foi possível carregar os modelos de show.");
-  return data.map((row) => ({ id: row.id, name: row.name, price: Number(row.price) }));
+  return data.map((row) => ({ id: row.id, name: row.name, price: Number(row.price), corporatePrice: Number(row.corporate_price) }));
 }
 
 /** O que o usuário logado pode fazer no módulo. A regra fica só no banco. */
@@ -76,7 +76,11 @@ export async function createCommercialLink(
     p_validity: input.validity,
     p_expires_at: input.validity === "custom" ? input.expiresAt : null,
     // Sem price: o banco usa o preço padrão vigente.
-    p_items: input.items.map((item) => (item.price === null ? { model_id: item.modelId } : { model_id: item.modelId, price: item.price })),
+    p_items: input.items.map((item) =>
+      item.price === null
+        ? { model_id: item.modelId, tier: input.tier }
+        : { model_id: item.modelId, tier: input.tier, price: item.price },
+    ),
   } as Database["public"]["Functions"]["create_commercial_link"]["Args"];
   const rows = unwrap(await client.rpc("create_commercial_link", args));
   return unwrap({ data: rows[0], error: null }, "Não foi possível criar o link.");

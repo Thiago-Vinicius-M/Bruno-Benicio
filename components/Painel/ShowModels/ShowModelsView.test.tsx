@@ -19,6 +19,7 @@ const model = (id: string, name: string, price: number, active = true): ShowMode
   duration: "2h30 de show",
   description: null,
   price,
+  corporate_price: price + 500,
   active,
   position: Number(id.slice(-1)),
   created_by: null,
@@ -87,14 +88,20 @@ describe("Modelos de Show (painel)", () => {
     fireEvent.click(screen.getByRole("button", { name: "+ Novo modelo" }));
     fireEvent.change(screen.getByLabelText("Nome do modelo *"), { target: { value: "Acústico" } });
     fireEvent.change(screen.getByLabelText("Duração *"), { target: { value: "1h30 de show" } });
-    fireEvent.change(screen.getByLabelText("Valor (R$) *"), { target: { value: "abc" } });
+    fireEvent.change(screen.getByLabelText("Valor particular (R$) *"), { target: { value: "abc" } });
     expect(screen.getByText(/Valor inválido/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/valor válido/);
     expect(actions.createShowModelAction).not.toHaveBeenCalled();
 
-    fireEvent.change(screen.getByLabelText("Valor (R$) *"), { target: { value: "1.250,00" } });
-    expect(plain(screen.getByText(/No site e na mensagem do WhatsApp/).textContent)).toContain("R$ 1.250,00");
+    fireEvent.change(screen.getByLabelText("Valor particular (R$) *"), { target: { value: "1.250,00" } });
+    expect(plain(screen.getByText(/Eventos particulares:/).textContent)).toContain("R$ 1.250,00");
+    fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
+    expect((await screen.findByRole("alert")).textContent).toMatch(/corporativo/);
+    expect(actions.createShowModelAction).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText("Valor corporativo (R$) *"), { target: { value: "1.750,00" } });
+    expect(plain(screen.getByText(/Eventos corporativos:/).textContent)).toContain("R$ 1.750,00");
     fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
     await waitFor(() =>
       expect(actions.createShowModelAction).toHaveBeenCalledWith({
@@ -102,6 +109,7 @@ describe("Modelos de Show (painel)", () => {
         duration: "1h30 de show",
         description: "",
         price: "1.250,00",
+        corporatePrice: "1.750,00",
         active: true,
       }),
     );
@@ -112,7 +120,7 @@ describe("Modelos de Show (painel)", () => {
     renderView();
     fireEvent.click(screen.getByRole("button", { name: "Editar Voz e violão" }));
     expect((screen.getByLabelText("Nome do modelo *") as HTMLInputElement).value).toBe("Voz e violão");
-    expect((screen.getByLabelText("Valor (R$) *") as HTMLInputElement).value).toBe("1.500,00");
+    expect((screen.getByLabelText("Valor particular (R$) *") as HTMLInputElement).value).toBe("1.500,00");
     expect(screen.queryByText("Ativo", { selector: "strong" })).toBeNull();
 
     fireEvent.change(screen.getByLabelText("Nome do modelo *"), { target: { value: "Bruno e Benício e banda" } });

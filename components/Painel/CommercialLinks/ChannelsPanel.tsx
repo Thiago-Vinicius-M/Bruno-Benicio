@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useTransition } from "react";
 import {
   activateChannelAction,
   createChannelAction,
   deactivateChannelAction,
   updateChannelAction,
-} from "@/app/painel/(area)/links/actions";
+} from "@/app/painel/(area)/configuracoes/actions";
 import type { ChannelOwner, WhatsAppChannel } from "@/lib/commercialLinks/types";
 import type { ActionResult } from "@/lib/painel/actionResult";
 import { formatWhatsApp } from "@/lib/whatsapp";
@@ -18,20 +18,24 @@ import { ChannelForm, type ChannelFormInput } from "./ChannelForm";
 import css from "./CommercialLinks.module.css";
 
 type Props = {
+  /** Só os canais que este ADMIN cadastrou (o RLS já limita; a página filtra por created_by). */
   channels: WhatsAppChannel[];
+  /** Usuários ativos (ADMIN/SELLER) que podem receber um número. */
   owners: ChannelOwner[];
-  busyId: string | null;
-  pending: boolean;
-  perform: (id: string, action: () => Promise<ActionResult>, onSuccess?: () => void) => void;
 };
 
+const NETWORK_ERROR = "Não foi possível concluir a operação. Verifique a conexão e tente novamente.";
+
 /**
- * WhatsApp autorizados de cada usuário (só ADMIN). Cada usuário escolhe entre os próprios
- * ao criar um link. Desativar não apaga: os links já criados com o canal podem ser
- * redirecionados para outro número ativo; sem isso, deixam de abrir conversa.
+ * WhatsApp dos links comerciais, em Configurações (só ADMIN). Cada ADMIN vê e administra
+ * só os números que cadastrou; cada usuário escolhe entre os próprios ao criar um link.
+ * Desativar não apaga: os links já criados com o canal podem ser redirecionados para outro
+ * número ativo; sem isso, deixam de abrir conversa.
  */
-export function ChannelsPanel({ channels, owners, busyId, pending, perform }: Props) {
+export function ChannelsPanel({ channels, owners }: Props) {
   const toast = useToast();
+  const [pending, startTransition] = useTransition();
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [editing, setEditing] = useState<WhatsAppChannel | "new" | null>(null);
   const [formBusy, setFormBusy] = useState(false);
   const [deactivating, setDeactivating] = useState<WhatsAppChannel | null>(null);
@@ -39,8 +43,31 @@ export function ChannelsPanel({ channels, owners, busyId, pending, perform }: Pr
 
   const ownerNames = new Map(owners.map((owner) => [owner.id, owner.name]));
   const ownerName = (id: string) => ownerNames.get(id) ?? "Usuário desativado";
-  // Usuários ativos (mesmo sem canal) e donos de canais que já não estão na lista.
-  const ownerIds = [...new Set([...owners.map((owner) => owner.id), ...channels.map((channel) => channel.owner_id)])];
+  // Só quem tem número cadastrado por este ADMIN, na ordem dos usuários (desativados no fim).
+  const order = new Map(owners.map((owner, index) => [owner.id, index]));
+  const ownerIds = [...new Set(channels.map((channel) => channel.owner_id))].sort(
+    (a, b) => (order.get(a) ?? owners.length) - (order.get(b) ?? owners.length),
+  );
+
+  function perform(id: string, action: () => Promise<ActionResult>, onSuccess?: () => void) {
+    if (pending) return;
+    setBusyId(id);
+    startTransition(async () => {
+      let result: ActionResult;
+      try {
+        result = await action();
+      } catch {
+        result = { status: "error", message: NETWORK_ERROR };
+      }
+      setBusyId(null);
+      if (result.status === "success") {
+        onSuccess?.();
+        toast(result.message);
+      } else {
+        toast(result.message, "error");
+      }
+    });
+  }
   const labelOf = (id: string | null) => {
     const target = channels.find((channel) => channel.id === id);
     return target ? `${target.label} · ${formatWhatsApp(target.whatsapp)} (${ownerName(target.owner_id)})` : "outro WhatsApp";
@@ -72,10 +99,11 @@ export function ChannelsPanel({ channels, owners, busyId, pending, perform }: Pr
   return (
     <section className={css.section} aria-labelledby="canais-whatsapp">
       <h2 id="canais-whatsapp" className={css.sectionTitle}>
-        WhatsApp dos usuários
+        WhatsApp dos links comerciais
       </h2>
       <p className={styles.hint}>
-        Só administradores cadastram números. Cada usuário escolhe, ao criar um link, um dos próprios WhatsApp ativos.
+        Aqui aparecem só os números que você cadastrou. Cada usuário escolhe, ao gerar um link, um dos próprios WhatsApp
+        ativos.
       </p>
       <div className={agenda.toolbar}>
         <button type="button" className={styles.button} onClick={() => setEditing("new")}>
@@ -85,7 +113,7 @@ export function ChannelsPanel({ channels, owners, busyId, pending, perform }: Pr
 
       {ownerIds.length === 0 ? (
         <div className={agenda.empty}>
-          <p>Nenhum usuário Administrador ou Vendedor ativo.</p>
+          <p>Você ainda não cadastrou nenhum WhatsApp.</p>
         </div>
       ) : (
         <ul className={agenda.list} aria-label="WhatsApp por usuário">
@@ -94,79 +122,75 @@ export function ChannelsPanel({ channels, owners, busyId, pending, perform }: Pr
             return (
               <li key={ownerId} className={css.owner}>
                 <p className={css.ownerName}>{ownerName(ownerId)}</p>
-                {own.length === 0 ? (
-                  <p className={css.meta}>Nenhum WhatsApp cadastrado: este usuário ainda não consegue criar links.</p>
-                ) : (
-                  <ul className={css.channels} aria-label={`WhatsApp de ${ownerName(ownerId)}`}>
-                    {own.map((channel) => (
-                      <li
-                        key={channel.id}
-                        className={css.channel}
-                        data-inactive={!channel.active || undefined}
-                        aria-busy={busyId === channel.id || undefined}
-                      >
-                        <div className={css.channelInfo}>
-                          <p className={css.channelLabel}>
-                            {channel.label}
-                            {channel.is_primary && (
-                              <span className={css.pill} data-status="primary">
-                                Principal
-                              </span>
-                            )}
-                            {!channel.active && (
-                              <span className={css.pill} data-status="inactive">
-                                Desativado
-                              </span>
-                            )}
-                          </p>
-                          <p className={css.meta}>
-                            {formatWhatsApp(channel.whatsapp)}
-                            {!channel.active &&
-                              (channel.redirect_channel_id
-                                ? ` · links redirecionados para ${labelOf(channel.redirect_channel_id)}`
-                                : " · links sem WhatsApp")}
-                          </p>
-                        </div>
-                        <div className={css.channelActions}>
-                          {channel.active && (
-                            <button
-                              type="button"
-                              className={`${styles.button} ${styles.buttonGhost} ${agenda.action}`}
-                              aria-label={`Editar ${channel.label} de ${ownerName(ownerId)}`}
-                              disabled={pending}
-                              onClick={() => setEditing(channel)}
-                            >
-                              Editar
-                            </button>
+                <ul className={css.channels} aria-label={`WhatsApp de ${ownerName(ownerId)}`}>
+                  {own.map((channel) => (
+                    <li
+                      key={channel.id}
+                      className={css.channel}
+                      data-inactive={!channel.active || undefined}
+                      aria-busy={busyId === channel.id || undefined}
+                    >
+                      <div className={css.channelInfo}>
+                        <p className={css.channelLabel}>
+                          {channel.label}
+                          {channel.is_primary && (
+                            <span className={css.pill} data-status="primary">
+                              Principal
+                            </span>
                           )}
+                          {!channel.active && (
+                            <span className={css.pill} data-status="inactive">
+                              Desativado
+                            </span>
+                          )}
+                        </p>
+                        <p className={css.meta}>
+                          {formatWhatsApp(channel.whatsapp)}
+                          {!channel.active &&
+                            (channel.redirect_channel_id
+                              ? ` · links redirecionados para ${labelOf(channel.redirect_channel_id)}`
+                              : " · links sem WhatsApp")}
+                        </p>
+                      </div>
+                      <div className={css.channelActions}>
+                        {channel.active && (
                           <button
                             type="button"
-                            className={`${styles.button} ${styles.buttonGhost} ${agenda.action} ${channel.active ? agenda.danger : ""}`}
-                            aria-label={`${channel.active ? "Desativar" : "Redirecionar"} ${channel.label} de ${ownerName(ownerId)}`}
+                            className={`${styles.button} ${styles.buttonGhost} ${agenda.action}`}
+                            aria-label={`Editar ${channel.label} de ${ownerName(ownerId)}`}
                             disabled={pending}
-                            onClick={() => {
-                              setRedirectTo(channel.redirect_channel_id ?? "");
-                              setDeactivating(channel);
-                            }}
+                            onClick={() => setEditing(channel)}
                           >
-                            {channel.active ? "Desativar" : "Redirecionar"}
+                            Editar
                           </button>
-                          {!channel.active && (
-                            <button
-                              type="button"
-                              className={`${styles.button} ${styles.buttonGhost} ${agenda.action}`}
-                              aria-label={`Reativar ${channel.label} de ${ownerName(ownerId)}`}
-                              disabled={pending}
-                              onClick={() => perform(channel.id, () => activateChannelAction(channel.id))}
-                            >
-                              Reativar
-                            </button>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                        )}
+                        <button
+                          type="button"
+                          className={`${styles.button} ${styles.buttonGhost} ${agenda.action} ${channel.active ? agenda.danger : ""}`}
+                          aria-label={`${channel.active ? "Desativar" : "Redirecionar"} ${channel.label} de ${ownerName(ownerId)}`}
+                          disabled={pending}
+                          onClick={() => {
+                            setRedirectTo(channel.redirect_channel_id ?? "");
+                            setDeactivating(channel);
+                          }}
+                        >
+                          {channel.active ? "Desativar" : "Redirecionar"}
+                        </button>
+                        {!channel.active && (
+                          <button
+                            type="button"
+                            className={`${styles.button} ${styles.buttonGhost} ${agenda.action}`}
+                            aria-label={`Reativar ${channel.label} de ${ownerName(ownerId)}`}
+                            disabled={pending}
+                            onClick={() => perform(channel.id, () => activateChannelAction(channel.id))}
+                          >
+                            Reativar
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </li>
             );
           })}

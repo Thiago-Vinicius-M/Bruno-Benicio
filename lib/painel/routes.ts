@@ -7,13 +7,15 @@ export const PANEL_ROUTES = {
   login: "/painel/login",
   recoverPassword: "/painel/recuperar-senha",
   accessDenied: "/painel/acesso-negado",
+  /** Configurações: senha e, para ADMIN, os WhatsApp dos links comerciais. */
+  settings: "/painel/configuracoes/senha",
   changePassword: "/painel/configuracoes/senha",
   agenda: "/painel/agenda",
   /** Vídeos da Home e do "Ver mais". */
   videos: "/painel/videos",
   /** Formatos e preços da seção NOSSO SHOW. Exclusiva de ADMIN. */
   showModels: "/painel/modelos",
-  /** Links comerciais (ADMIN e SELLER) e, para ADMIN, os canais de WhatsApp. */
+  /** Links comerciais (ADMIN e SELLER). Os WhatsApp ficam em Configurações. */
   commercialLinks: "/painel/links",
   /** Endereço antigo da seção Vendedores: redireciona para os links comerciais. */
   legacySellers: "/painel/vendedores",

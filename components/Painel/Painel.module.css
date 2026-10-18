@@ -227,6 +227,12 @@
   border-radius: var(--panel-radius);
 }
 
+.panelTitle {
+  margin: 0 0 16px;
+  font-size: var(--panel-text-lg, 1.125rem);
+  font-weight: var(--weight-medium);
+}
+
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));

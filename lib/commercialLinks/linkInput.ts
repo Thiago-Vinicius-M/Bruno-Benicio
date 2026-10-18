@@ -83,6 +83,10 @@ export function parseCommercialLinkInput(raw: unknown): CommercialLinkInput {
     expiresAt = instant.toISOString();
   }
 
+  // Ausente = particular (o padrão do banco).
+  const tier = source.tier ?? "private";
+  if (tier !== "private" && tier !== "corporate") throw validationError("Escolha se o evento é particular ou corporativo.");
+
   if (!Array.isArray(source.items) || source.items.length === 0) {
     throw validationError("Escolha ao menos um modelo de show.");
   }
@@ -98,5 +102,5 @@ export function parseCommercialLinkInput(raw: unknown): CommercialLinkInput {
     return { modelId: entry.modelId, price };
   });
 
-  return { channelId: source.channelId, label, validity: source.validity, expiresAt, items };
+  return { channelId: source.channelId, label, validity: source.validity, expiresAt, tier, items };
 }

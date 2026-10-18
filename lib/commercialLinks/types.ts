@@ -16,8 +16,11 @@ export type ChannelOwner = { id: string; name: string; role: Role };
 /** O que o usuário logado pode fazer no módulo (get_commercial_link_permissions). */
 export type LinkPermissions = { canCreate: boolean; canCustomizePrices: boolean };
 
-/** Modelo ativo com o preço padrão atual: ponto de partida de um link novo. */
-export type LinkModel = { id: string; name: string; price: number };
+/** Modelo ativo com os valores padrão atuais (particular e corporativo): ponto de partida de um link novo. */
+export type LinkModel = { id: string; name: string; price: number; corporatePrice: number };
+
+/** Tipo de evento: só escolhe o valor de partida de cada modelo no link. */
+export type PriceTier = "private" | "corporate";
 
 /** Status no histórico, pelo relógio do banco. `inactive`: sem WhatsApp disponível (canal ou dono do canal desativado). */
 export type CommercialLinkStatus = "active" | "expired" | "revoked" | "inactive";
@@ -55,6 +58,7 @@ export type CommercialLinkInput = {
   validity: LinkValidity;
   /** ISO, só em "custom" (já convertido do horário de Brasília). */
   expiresAt: string | null;
+  tier: PriceTier;
   items: { modelId: string; price: number | null }[];
 };
 

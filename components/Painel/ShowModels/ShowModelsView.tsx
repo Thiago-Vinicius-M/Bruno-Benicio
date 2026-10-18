@@ -123,7 +123,10 @@ export function ShowModelsView({ models, authors }: Props) {
                       {model.description && ` · ${model.description}`}
                     </p>
                   </div>
-                  <p className={css.price}>{formatPrice(model.price)}</p>
+                  <p className={css.price}>
+                    <span className={css.priceLine}>Particular {formatPrice(model.price)}</span>
+                    <span className={css.priceLine}>Corporativo {formatPrice(model.corporate_price)}</span>
+                  </p>
                   <div className={`${videos.order} ${css.order}`} role="group" aria-label={`Ordem de ${model.name}`}>
                     <button
                       type="button"

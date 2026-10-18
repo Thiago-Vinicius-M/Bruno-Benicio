@@ -66,8 +66,8 @@ describe("data e horário do evento", () => {
 describe("toShowModelRow", () => {
   it("normaliza os campos do formulário", () => {
     expect(
-      toShowModelRow({ name: "  Voz   e violão ", duration: " 2h30 de show ", description: "  ", price: "1.500,00" }),
-    ).toEqual({ name: "Voz e violão", duration: "2h30 de show", description: null, price: 1500 });
+      toShowModelRow({ name: "  Voz   e violão ", duration: " 2h30 de show ", description: "  ", price: "1.500,00", corporatePrice: "2.000" }),
+    ).toEqual({ name: "Voz e violão", duration: "2h30 de show", description: null, price: 1500, corporate_price: 2000 });
   });
 
   it("campos obrigatórios e valor válido, com mensagens para o usuário", () => {
@@ -79,11 +79,12 @@ describe("toShowModelRow", () => {
         return isAgendaError(error) ? error.message : String(error);
       }
     };
-    expect(problem({ name: "", duration: "1h", price: "10" })).toMatch(/nome/);
-    expect(problem({ name: "X", duration: "", price: "10" })).toMatch(/duração/);
-    expect(problem({ name: "X", duration: "1h", price: "0" })).toMatch(/valor válido/);
-    expect(problem({ name: "X".repeat(81), duration: "1h", price: "10" })).toMatch(/longo/);
-    expect(problem({ name: "X", duration: "1h", description: "d".repeat(281), price: "10" })).toMatch(/Descrição/);
+    expect(problem({ name: "", duration: "1h", price: "10", corporatePrice: "20" })).toMatch(/nome/);
+    expect(problem({ name: "X", duration: "", price: "10", corporatePrice: "20" })).toMatch(/duração/);
+    expect(problem({ name: "X", duration: "1h", price: "0", corporatePrice: "20" })).toMatch(/valor válido/);
+    expect(problem({ name: "X", duration: "1h", price: "10", corporatePrice: "" })).toMatch(/corporativo/);
+    expect(problem({ name: "X".repeat(81), duration: "1h", price: "10", corporatePrice: "20" })).toMatch(/longo/);
+    expect(problem({ name: "X", duration: "1h", description: "d".repeat(281), price: "10", corporatePrice: "20" })).toMatch(/Descrição/);
   });
 });
 
@@ -135,7 +136,7 @@ describe("repositório", () => {
       { data: { id: "a", price: 990 }, error: null },
       { data: { id: "a", price: 990 }, error: null },
     ]);
-    const input = { name: "Acústico", duration: "1h30", price: "990", active: false };
+    const input = { name: "Acústico", duration: "1h30", price: "990", corporatePrice: "1490", active: false };
     await createShowModel(client, input);
     await updateShowModel(client, "a", input);
     expect(calls.find(([method]) => method === "insert")?.[1]).toEqual({
@@ -143,6 +144,7 @@ describe("repositório", () => {
       duration: "1h30",
       description: null,
       price: 990,
+      corporate_price: 1490,
       active: false,
     });
     expect(calls.find(([method]) => method === "update")?.[1]).toEqual({
@@ -150,12 +152,13 @@ describe("repositório", () => {
       duration: "1h30",
       description: null,
       price: 990,
+      corporate_price: 1490,
     });
   });
 
   it("valor inválido não chega ao banco", async () => {
     const { client, calls } = createFakeSupabase();
-    await expect(createShowModel(client, { name: "X", duration: "1h", price: "-1" })).rejects.toMatchObject({
+    await expect(createShowModel(client, { name: "X", duration: "1h", price: "-1", corporatePrice: "10" })).rejects.toMatchObject({
       code: "VALIDATION",
     });
     expect(calls).toHaveLength(0);

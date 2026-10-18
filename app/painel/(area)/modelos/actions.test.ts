@@ -25,7 +25,7 @@ const models = await import("./actions");
 
 const ME = "00000000-0000-4000-8000-000000000001";
 const ID = "00000000-0000-4000-8000-0000000000aa";
-const modelInput = { name: "Acústico", duration: "1h30 de show", price: "990,00" };
+const modelInput = { name: "Acústico", duration: "1h30 de show", price: "990,00", corporatePrice: "1.490,00" };
 
 /** Respostas do banco em ordem: perfil (requirePanelAdmin) e depois a operação. */
 function session(profile: object | null, rest: { data: unknown; error: unknown }[] = []) {
@@ -89,6 +89,7 @@ describe("ADMIN", () => {
       duration: "1h30 de show",
       description: null,
       price: 990,
+      corporate_price: 1490,
       active: true,
     });
     expect(state.revalidated).toEqual(["/painel/modelos", "/"]);

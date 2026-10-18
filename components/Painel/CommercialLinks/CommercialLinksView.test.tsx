@@ -16,11 +16,6 @@ import type { PanelUser } from "@/lib/painel/access";
 const actions = vi.hoisted(() => ({
   createCommercialLinkAction: vi.fn(),
   deactivateCommercialLinkAction: vi.fn(),
-  createChannelAction: vi.fn(),
-  updateChannelAction: vi.fn(),
-  deactivateChannelAction: vi.fn(),
-  activateChannelAction: vi.fn(),
-  setLegacySellerActiveAction: vi.fn(),
 }));
 vi.mock("@/app/painel/(area)/links/actions", () => actions);
 
@@ -48,18 +43,19 @@ const SELLER: PanelUser = {
   name: "Ana",
   role: "SELLER",
 };
-const OTHER = "00000000-0000-4000-8000-0000000000b2";
 
 const MODELS = [
   {
     id: "11111111-1111-4111-8111-111111111111",
     name: "Voz e violão",
     price: 1500,
+    corporatePrice: 2000,
   },
   {
     id: "22222222-2222-4222-8222-222222222222",
     name: "Bruno e Benício e banda",
     price: 3000,
+    corporatePrice: 3500,
   },
 ];
 
@@ -140,7 +136,6 @@ function renderView({
   } as LinkPermissions,
   channels = SELLER_CHANNELS,
   links = [LINK],
-  owners = [] as { id: string; name: string; role: "ADMIN" | "SELLER" }[],
 } = {}) {
   return render(
     <ToastProvider>
@@ -150,7 +145,6 @@ function renderView({
         links={links}
         channels={channels}
         models={MODELS}
-        owners={owners}
         siteOrigin={ORIGIN}
       />
     </ToastProvider>,
@@ -310,11 +304,23 @@ describe("Links comerciais (vendedor)", () => {
     );
     expect(card.textContent).toContain("1.400,00");
     expect(card.textContent).not.toContain("padrão");
-    // Vendedor não vê autor, canais de todos nem links antigos.
+    // Vendedor não vê autor nem links antigos.
     expect(card.textContent).not.toContain("por Ana");
-    expect(
-      screen.queryByRole("heading", { name: "WhatsApp dos usuários" }),
-    ).toBeNull();
+  });
+
+  it("o WhatsApp é o último campo do formulário e da revisão", async () => {
+    renderView();
+    const form = openForm();
+    const legends = form.getAllByRole("group").map((group) => group.querySelector("legend")?.textContent);
+    expect(legends).toEqual(["Tipo de evento", "Formatos e valores *", "Validade", "WhatsApp que recebe os contatos *"]);
+    const label = form.getByRole("textbox", { name: "Identificação (opcional)" });
+    const whatsapp = form.getByRole("radio", { name: /Comercial/ });
+    expect(label.compareDocumentPosition(whatsapp) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    fireEvent.click(whatsapp);
+    fireEvent.click(form.getByRole("button", { name: "Revisar proposta" }));
+    const terms = (await form.findAllByRole("term")).map((term) => term.textContent);
+    expect(terms.at(-1)).toBe("WhatsApp que recebe os contatos");
   });
 
   it("WhatsApp é obrigatório: nenhum vem pré-selecionado, nem o principal; inativos não aparecem", async () => {
@@ -482,18 +488,12 @@ describe("Links comerciais (ADMIN)", () => {
     "Escritório",
     "5562955554444",
   );
-  const owners = [
-    { id: ADMIN.id, name: "Bruno", role: "ADMIN" as const },
-    { id: SELLER.id, name: "Ana", role: "SELLER" as const },
-    { id: OTHER, name: "Caio", role: "SELLER" as const },
-  ];
 
-  it("vê autor dos links e os WhatsApp de todos agrupados por usuário; sem links permanentes antigos", () => {
+  it("vê o autor dos links; os WhatsApp não são administrados aqui (ficam em Configurações)", () => {
     renderView({
       user: ADMIN,
       permissions: { canCreate: true, canCustomizePrices: true },
       channels: [...SELLER_CHANNELS, adminChannel],
-      owners,
     });
     expect(screen.getByRole("heading", { name: "Links gerados" })).toBeTruthy();
     fireEvent.click(
@@ -502,14 +502,7 @@ describe("Links comerciais (ADMIN)", () => {
       }),
     );
     expect(screen.getByText(/por Ana/)).toBeTruthy();
-    expect(
-      within(
-        screen.getByRole("list", { name: "WhatsApp de Ana" }),
-      ).getAllByRole("listitem"),
-    ).toHaveLength(3);
-    expect(screen.getByText(/Caio/).closest("li")?.textContent).toMatch(
-      /ainda não consegue criar links/,
-    );
+    expect(screen.queryByRole("button", { name: "+ Novo WhatsApp" })).toBeNull();
     expect(screen.queryByText(/Links permanentes antigos/)).toBeNull();
   });
 
@@ -518,7 +511,6 @@ describe("Links comerciais (ADMIN)", () => {
       user: ADMIN,
       permissions: { canCreate: true, canCustomizePrices: true },
       channels: [...SELLER_CHANNELS, adminChannel],
-      owners,
     });
     const form = openForm();
     expect(
@@ -528,76 +520,13 @@ describe("Links comerciais (ADMIN)", () => {
     ).toEqual([expect.stringContaining("Escritório")]);
   });
 
-  it("desativar WhatsApp com redirecionamento para outro número ativo", async () => {
+  it("ADMIN sem WhatsApp próprio: o aviso aponta para Configurações", () => {
     renderView({
       user: ADMIN,
       permissions: { canCreate: true, canCustomizePrices: true },
-      channels: [...SELLER_CHANNELS, adminChannel],
-      owners,
+      channels: SELLER_CHANNELS,
     });
-    fireEvent.click(
-      screen.getByRole("button", { name: "Desativar Comercial de Ana" }),
-    );
-    const dialog = within(
-      screen.getByRole("dialog", { name: "Desativar WhatsApp?" }),
-    );
-    const select = dialog.getByRole("combobox", {
-      name: "Contatos dos links deste WhatsApp",
-    }) as HTMLSelectElement;
-    // Só canais ativos (e não o próprio) aparecem como destino.
-    expect([...select.options].map((option) => option.textContent)).toEqual([
-      "Não redirecionar (os links deixam de abrir conversa)",
-      expect.stringContaining("Pessoal"),
-      expect.stringContaining("Escritório"),
-    ]);
-    fireEvent.change(select, { target: { value: adminChannel.id } });
-    fireEvent.click(dialog.getByRole("button", { name: "Desativar WhatsApp" }));
-    await waitFor(() =>
-      expect(actions.deactivateChannelAction).toHaveBeenCalledWith(
-        SELLER_CHANNELS[0].id,
-        adminChannel.id,
-      ),
-    );
-  });
-
-  it("cadastrar WhatsApp valida o número antes de enviar", async () => {
-    renderView({
-      user: ADMIN,
-      permissions: { canCreate: true, canCustomizePrices: true },
-      channels: [adminChannel],
-      owners,
-    });
-    fireEvent.click(screen.getByRole("button", { name: "+ Novo WhatsApp" }));
-    const dialog = within(
-      screen.getByRole("dialog", { name: "Novo WhatsApp" }),
-    );
-    fireEvent.change(dialog.getByRole("combobox", { name: "Usuário *" }), {
-      target: { value: OTHER },
-    });
-    fireEvent.change(dialog.getByRole("textbox", { name: "WhatsApp *" }), {
-      target: { value: "62 99999-8888" },
-    });
-    fireEvent.change(dialog.getByRole("textbox", { name: "Identificação *" }), {
-      target: { value: "Comercial" },
-    });
-    fireEvent.click(dialog.getByRole("button", { name: "Salvar" }));
-    expect((await dialog.findByRole("alert")).textContent).toMatch(
-      /código do país/,
-    );
-    expect(actions.createChannelAction).not.toHaveBeenCalled();
-
-    fireEvent.change(dialog.getByRole("textbox", { name: "WhatsApp *" }), {
-      target: { value: "+55 62 99999-8888" },
-    });
-    fireEvent.click(dialog.getByRole("button", { name: "Salvar" }));
-    await waitFor(() =>
-      expect(actions.createChannelAction).toHaveBeenCalledWith({
-        ownerId: OTHER,
-        whatsapp: "+55 62 99999-8888",
-        label: "Comercial",
-        isPrimary: false,
-      }),
-    );
+    expect(screen.getByText(/Cadastre o seu número em Configurações/)).toBeTruthy();
   });
 
   it("perfil sem permissão de criar (defesa extra): botão desabilitado", () => {
@@ -605,7 +534,6 @@ describe("Links comerciais (ADMIN)", () => {
       user: ADMIN,
       permissions: { canCreate: false, canCustomizePrices: false },
       channels: [adminChannel],
-      owners,
     });
     expect(
       (screen.getByRole("button", { name: "Gerar link" }) as HTMLButtonElement)

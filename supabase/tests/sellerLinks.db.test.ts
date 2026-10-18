@@ -199,6 +199,36 @@ describe("canais de WhatsApp", () => {
     });
   });
 
+  it("cada ADMIN vê e altera só os canais que cadastrou; o dono continua lendo os próprios; principal troca entre ADMINs", async () => {
+    const secondAdminId = await createUser(db, "segundo-admin@example.com", "ADMIN");
+    await runAs(db, asUser(adminId), async () => {
+      const mine = await insertChannel(sellerId, PHONE, "Do admin 1", true);
+      await actAs(db, asUser(secondAdminId));
+      const theirs = await insertChannel(sellerId, PHONE_2, "Do admin 2");
+      const ownOfSecond = await insertChannel(secondAdminId, PHONE_3, "Meu");
+      const visible = async () =>
+        (await db.query<{ id: string }>("select id from public.whatsapp_channels")).rows.map((row) => row.id).sort();
+
+      // ADMIN 2: os que cadastrou (inclusive o próprio número); o do ADMIN 1 não aparece nem muda.
+      expect(await visible()).toEqual([theirs.id, ownOfSecond.id].sort());
+      expect((await db.query("update public.whatsapp_channels set label = 'X' where id = $1 returning id", [mine.id])).rows).toHaveLength(0);
+      // Redireciona só para um canal que enxerga.
+      expect((await pgError(db, "update public.whatsapp_channels set active = false, redirect_channel_id = $2 where id = $1", [theirs.id, mine.id])).code).toBe(
+        "22023",
+      );
+      // Tornar principal tira o principal do canal do ADMIN 1 (mesmo dono), sem conflito.
+      await db.query("update public.whatsapp_channels set is_primary = true where id = $1", [theirs.id]);
+
+      await actAs(db, asUser(adminId));
+      expect(await visible()).toEqual([mine.id]);
+
+      await actAs(db, asUser(sellerId));
+      expect(await visible()).toEqual([mine.id, theirs.id].sort());
+      const primaries = await db.query<{ id: string }>("select id from public.whatsapp_channels where is_primary");
+      expect(primaries.rows.map((row) => row.id)).toEqual([theirs.id]);
+    });
+  });
+
   it("número validado, sem duplicar para o mesmo usuário; número e dono não mudam; nada é apagado", async () => {
     await runAs(db, asUser(adminId), async () => {
       const channel = await insertChannel(sellerId);
@@ -333,6 +363,40 @@ describe("criação de link", () => {
       const error = await createLinkError(channel.id, await itemsFor({ "Voz e violão": 1400 }));
       expect(error.code).toBe("42501");
       expect((await db.query("select 1 from public.seller_links where created_by = $1", [sellerId])).rows).toHaveLength(1);
+    });
+  });
+
+  it("corporativo: valor padrão é o corporativo do modelo (particular + 500 na migração); sem permissão, só ele", async () => {
+    await runAs(db, asUser(adminId), async () => {
+      const channel = await insertChannel(sellerId);
+      await actAs(db, asUser(sellerId));
+      const [first, second] = MODELS;
+      const link = await createLink(channel.id, [
+        { model_id: first.id, tier: "corporate" },
+        { model_id: second.id, tier: "corporate", price: second.price + 500 },
+      ]);
+      expect(await commercial(link.code)).toEqual([
+        { name: first.name, price: first.price + 500 },
+        { name: second.name, price: second.price + 500 },
+      ]);
+      // Valor particular num link corporativo é personalização: exige permissão.
+      expect((await createLinkError(channel.id, [{ model_id: first.id, tier: "corporate", price: first.price }])).code).toBe("42501");
+      expect((await createLinkError(channel.id, [{ model_id: first.id, tier: "vip" }])).code).toBe("22023");
+
+      await actAs(db, superuser);
+      const { rows } = await db.query<{ price: string; default_price: string }>(
+        "select price, default_price from public.seller_link_prices where link_id = $1 and model_id = $2",
+        [link.id, first.id],
+      );
+      const corporate = (first.price + 500).toFixed(2);
+      expect(rows[0]).toEqual({ price: corporate, default_price: corporate });
+
+      // Valor corporativo editado de forma independente vale para os próximos links.
+      await db.query("update public.show_models set corporate_price = 4321 where id = $1", [first.id]);
+      await actAs(db, asUser(sellerId));
+      const next = await createLink(channel.id, [{ model_id: first.id, tier: "corporate" }]);
+      expect(await commercial(next.code)).toEqual([{ name: first.name, price: 4321 }]);
+      expect(await commercial(link.code)).toContainEqual({ name: first.name, price: first.price + 500 });
     });
   });
 
@@ -737,5 +801,23 @@ describe("sem vendedores antigos (20261018120300)", () => {
         if (code) expect(await resolve(code)).toEqual([]);
       }
     });
+  });
+});
+
+describe("migration 20261019120000 (valor corporativo)", () => {
+  it("num banco sem as migrations anteriores, falha com mensagem clara e sem alterar nada", async () => {
+    const { PGlite } = await import("@electric-sql/pglite");
+    const { readFileSync } = await import("node:fs");
+    const empty = await PGlite.create();
+    try {
+      await empty.exec("create schema private");
+      const sql = readFileSync(new URL("../migrations/20261019120000_corporate_prices.sql", import.meta.url), "utf8");
+      await expect(empty.exec(sql)).rejects.toThrow(/migrations anteriores/);
+      expect((await empty.query("select to_regprocedure('private.show_models_default_corporate_price()') as fn")).rows).toEqual([
+        { fn: null },
+      ]);
+    } finally {
+      await empty.close();
+    }
   });
 });

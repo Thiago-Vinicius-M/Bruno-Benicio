@@ -30,11 +30,13 @@ export function ShowModelForm({ model, save, onSaved, onCancel, onBusyChange }: 
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string>();
   const [price, setPrice] = useState(model ? priceInputValue(model.price) : "");
+  const [corporatePrice, setCorporatePrice] = useState(model ? priceInputValue(model.corporate_price) : "");
   const [active, setActive] = useState(true);
 
   useEffect(() => onBusyChange(pending), [pending, onBusyChange]);
 
   const parsedPrice = parsePrice(price);
+  const parsedCorporate = parsePrice(corporatePrice);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,6 +48,7 @@ export function ShowModelForm({ model, save, onSaved, onCancel, onBusyChange }: 
       duration: String(data.get("duration") ?? ""),
       description: String(data.get("description") ?? ""),
       price,
+      corporatePrice,
       active,
     };
     try {
@@ -127,7 +130,7 @@ export function ShowModelForm({ model, save, onSaved, onCancel, onBusyChange }: 
 
       <div className={styles.field}>
         <label htmlFor={field("price")} className={styles.label}>
-          Valor (R$) *
+          Valor particular (R$) *
         </label>
         <input
           id={field("price")}
@@ -146,7 +149,32 @@ export function ShowModelForm({ model, save, onSaved, onCancel, onBusyChange }: 
             ? "Em reais, com ou sem centavos (ex.: 1.500,00)."
             : parsedPrice === null
               ? "Valor inválido: use números, com até 2 casas decimais (ex.: 1.500,00)."
-              : `No site e na mensagem do WhatsApp: ${formatPrice(parsedPrice)}`}
+              : `Eventos particulares: ${formatPrice(parsedPrice)}`}
+        </p>
+      </div>
+
+      <div className={styles.field}>
+        <label htmlFor={field("corporate-price")} className={styles.label}>
+          Valor corporativo (R$) *
+        </label>
+        <input
+          id={field("corporate-price")}
+          name="corporatePrice"
+          required
+          inputMode="decimal"
+          autoComplete="off"
+          placeholder="2.000,00"
+          aria-describedby={field("corporate-price-hint")}
+          value={corporatePrice}
+          onChange={(event) => setCorporatePrice(event.target.value)}
+          className={styles.input}
+        />
+        <p id={field("corporate-price-hint")} className={styles.hint} aria-live="polite">
+          {corporatePrice.trim() === ""
+            ? "Valor para eventos corporativos, independente do particular."
+            : parsedCorporate === null
+              ? "Valor inválido: use números, com até 2 casas decimais (ex.: 2.000,00)."
+              : `Eventos corporativos: ${formatPrice(parsedCorporate)}`}
         </p>
       </div>
 

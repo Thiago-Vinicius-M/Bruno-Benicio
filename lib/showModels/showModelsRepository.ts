@@ -16,12 +16,16 @@ import type {
  */
 
 const COLUMNS =
-  "id, name, duration, description, price, active, position, created_by, updated_by, created_at, updated_at";
+  "id, name, duration, description, price, corporate_price, active, position, created_by, updated_by, created_at, updated_at";
 
 const NOT_FOUND = "Modelo de show não encontrado.";
 
 /** numeric chega como número pelo PostgREST; a conversão protege contra string. */
 const withNumericPrice = <T extends { price: number }>(row: T): T => ({ ...row, price: Number(row.price) });
+const withNumericPrices = (row: ShowModel): ShowModel => ({
+  ...withNumericPrice(row),
+  corporate_price: Number(row.corporate_price),
+});
 
 /** Todos os modelos (ativos e inativos), na ordem de exibição. */
 export async function listShowModels(client: AgendaClient): Promise<ShowModel[]> {
@@ -32,13 +36,13 @@ export async function listShowModels(client: AgendaClient): Promise<ShowModel[]>
     .order("created_at")
     .order("id");
   if (error) throw toAgendaError(error);
-  return data.map(withNumericPrice);
+  return data.map(withNumericPrices);
 }
 
 export async function createShowModel(client: AgendaClient, input: ShowModelInput): Promise<ShowModel> {
   const row = { ...toShowModelRow(input), active: input.active ?? true };
   const created: ShowModel = unwrap(await client.from("show_models").insert(row).select(COLUMNS).single());
-  return withNumericPrice(created);
+  return withNumericPrices(created);
 }
 
 /** Nome, duração, descrição e valor. A posição e o status não mudam aqui. */
@@ -48,7 +52,7 @@ export async function updateShowModel(client: AgendaClient, id: string, input: S
     await client.from("show_models").update(row).eq("id", id).select(COLUMNS).single(),
     NOT_FOUND,
   );
-  return withNumericPrice(updated);
+  return withNumericPrices(updated);
 }
 
 /** Inativo sai do site, mas continua cadastrado (pode ser reativado). */
@@ -57,7 +61,7 @@ export async function setShowModelActive(client: AgendaClient, id: string, activ
     await client.from("show_models").update({ active }).eq("id", id).select(COLUMNS).single(),
     NOT_FOUND,
   );
-  return withNumericPrice(updated);
+  return withNumericPrices(updated);
 }
 
 /** Sobe/desce uma posição na ordem de exibição. */

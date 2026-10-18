@@ -271,6 +271,7 @@ export type Database = {
       show_models: {
         Row: {
           active: boolean
+          corporate_price: number
           created_at: string
           created_by: string | null
           description: string | null
@@ -284,6 +285,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          corporate_price: number
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -297,6 +299,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          corporate_price?: number
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -607,6 +610,7 @@ export type Database = {
       get_link_show_models: {
         Args: never
         Returns: {
+          corporate_price: number
           id: string
           name: string
           price: number

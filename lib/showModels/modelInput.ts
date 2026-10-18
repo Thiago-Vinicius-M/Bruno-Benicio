@@ -16,6 +16,7 @@ export type ShowModelRow = {
   duration: string;
   description: string | null;
   price: number;
+  corporate_price: number;
 };
 
 /** Espaços repetidos viram um (o nome vai na mensagem do WhatsApp). */
@@ -38,5 +39,10 @@ export function toShowModelRow(input: ShowModelInput): ShowModelRow {
   const price = parsePrice(input.price);
   if (price === null) throw validationError("Informe um valor válido em reais, maior que zero (ex.: 1.500,00).");
 
-  return { name, duration, description, price };
+  const corporatePrice = parsePrice(input.corporatePrice);
+  if (corporatePrice === null) {
+    throw validationError("Informe um valor corporativo válido em reais, maior que zero (ex.: 2.000,00).");
+  }
+
+  return { name, duration, description, price, corporate_price: corporatePrice };
 }

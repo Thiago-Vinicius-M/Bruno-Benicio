@@ -45,11 +45,13 @@
 }
 
 .package {
+  --package-padding: clamp(16px, 1.6vw, 22px) clamp(4px, 1vw, 16px);
+
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   column-gap: var(--space-xs);
-  padding: clamp(16px, 1.6vw, 22px) clamp(4px, 1vw, 16px);
+  padding: var(--package-padding);
   border-block-end: 1px solid var(--show-line);
 }
 
@@ -102,15 +104,20 @@
   position: relative;
 }
 
+/* Com a escolha, o grid e o padding passam para o label: a linha inteira (inclusive o
+   espaço em volta do círculo) é a área de clique. */
 .package[data-selectable] {
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  cursor: pointer;
+  display: block;
+  padding: 0;
   transition: background-color 0.25s ease;
 }
 
-/* O label não gera caixa: rádio, nome e preço continuam sendo colunas do grid da linha. */
 .option {
-  display: contents;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--space-xs);
+  padding: var(--package-padding);
   cursor: pointer;
 }
 
@@ -323,8 +330,9 @@
   }
 
   /* Com a escolha: rádio à esquerda, nome e preço empilhados ao lado. */
-  .package[data-selectable] {
+  .option {
     grid-template-columns: auto minmax(0, 1fr);
+    row-gap: 8px;
   }
 
   .package[data-selectable] .radioMark {

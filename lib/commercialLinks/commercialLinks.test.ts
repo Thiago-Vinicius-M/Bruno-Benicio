@@ -99,11 +99,17 @@ describe("parseCommercialLinkInput (entrada do navegador)", () => {
       label: "Casamento João",
       validity: "24h",
       expiresAt: null,
+      tier: "private",
       items: [
         { modelId: M1, price: 1500 },
         { modelId: M2, price: 1800.5 },
       ],
     });
+  });
+
+  it("tipo de evento: corporativo passa adiante; inválido é recusado", () => {
+    expect(parseCommercialLinkInput({ ...base, tier: "corporate" }).tier).toBe("corporate");
+    expect(() => parseCommercialLinkInput({ ...base, tier: "vip" })).toThrow(/particular ou corporativo/);
   });
 
   it("modelo sem valor: o banco aplica o preço padrão", () => {
@@ -146,6 +152,7 @@ describe("repositório de links comerciais", () => {
       label: null,
       validity: "7d",
       expiresAt: "2030-01-01T00:00:00.000Z",
+      tier: "corporate",
       items: [
         { modelId: M1, price: 1400 },
         { modelId: M2, price: null },
@@ -161,7 +168,10 @@ describe("repositório de links comerciais", () => {
           p_label: null,
           p_validity: "7d",
           p_expires_at: null,
-          p_items: [{ model_id: M1, price: 1400 }, { model_id: M2 }],
+          p_items: [
+            { model_id: M1, tier: "corporate", price: 1400 },
+            { model_id: M2, tier: "corporate" },
+          ],
         },
       ],
     ]);
