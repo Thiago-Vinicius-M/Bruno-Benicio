@@ -323,22 +323,21 @@ describe("Links comerciais (vendedor)", () => {
     expect(terms.at(-1)).toBe("WhatsApp que recebe os contatos");
   });
 
-  it("WhatsApp é obrigatório: nenhum vem pré-selecionado, nem o principal; inativos não aparecem", async () => {
+  it("WhatsApp já vem selecionado com o principal; com mais de um, dá para trocar; inativos não aparecem", async () => {
     renderView();
     const form = openForm();
-    const radios = form.getAllByRole("radio", {
-      name: /Comercial|Pessoal|Antigo/,
-    });
-    expect(radios.map((radio) => (radio as HTMLInputElement).checked)).toEqual([
-      false,
-      false,
-    ]);
+    const radios = () =>
+      form.getAllByRole("radio", { name: /Comercial|Pessoal|Antigo/ }).map((radio) => (radio as HTMLInputElement).checked);
+    expect(radios()).toEqual([true, false]);
     expect(form.queryByText("Antigo")).toBeNull();
-    fireEvent.click(form.getByRole("button", { name: "Revisar proposta" }));
-    expect((await form.findByRole("alert")).textContent).toMatch(
-      /Escolha o WhatsApp/,
-    );
-    expect(actions.createCommercialLinkAction).not.toHaveBeenCalled();
+    fireEvent.click(form.getByRole("radio", { name: /Pessoal/ }));
+    expect(radios()).toEqual([false, true]);
+  });
+
+  it("sem principal: já vem selecionado o primeiro WhatsApp ativo", () => {
+    renderView({ channels: [{ ...SELLER_CHANNELS[0], is_primary: false }, SELLER_CHANNELS[1]] });
+    const form = openForm();
+    expect((form.getByRole("radio", { name: /Comercial/ }) as HTMLInputElement).checked).toBe(true);
   });
 
   it("sem permissão de preço: valores só para leitura e envio sem preço (padrão do banco)", async () => {

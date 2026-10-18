@@ -3,7 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createFabHover, FAB_HOVER } from "@/animations/fabHover";
+import { useGSAP } from "@/animations/gsap";
 import { logoutAction } from "@/app/painel/actions";
 import logo from "@/Imagens/BeB LOGO FUNDO PRETO_page-0001.png";
 import { LINK_CREATOR_ROLES, ROLE_LABELS, type PanelUser } from "@/lib/painel/access";
@@ -21,6 +23,19 @@ export function PanelShell({ user, children }: { user: PanelUser; children: Reac
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
+  const newLinkRef = useRef<HTMLAnchorElement>(null);
+  const newLinkIconRef = useRef<HTMLSpanElement>(null);
+
+  // Celular: "Gerar link" flutuante no canto inferior direito, com hover em GSAP.
+  // FAB_HOVER como dependência: o Fast Refresh recria a animação quando os parâmetros mudam.
+  useGSAP(
+    () => {
+      if (!newLinkRef.current || !newLinkIconRef.current) return;
+      const mm = createFabHover(newLinkRef.current, newLinkIconRef.current, FAB_HOVER);
+      return () => mm.revert();
+    },
+    { dependencies: [FAB_HOVER, user.role] },
+  );
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -51,10 +66,19 @@ export function PanelShell({ user, children }: { user: PanelUser; children: Reac
         </Link>
 
         <div className={styles.user}>
-          {/* Atalho principal de quem vende: abre o formulário de novo link de qualquer tela. */}
+          {/* Atalho principal de quem vende: abre o formulário de novo link de qualquer tela.
+              No celular vira o botão flutuante redondo do canto inferior direito. */}
           {LINK_CREATOR_ROLES.includes(user.role) && (
-            <Link href={NEW_COMMERCIAL_LINK_HREF} className={styles.newLink} aria-label="Gerar link" onClick={closeMenu}>
-              <span aria-hidden="true">+</span>
+            <Link
+              ref={newLinkRef}
+              href={NEW_COMMERCIAL_LINK_HREF}
+              className={styles.newLink}
+              aria-label="Gerar link"
+              onClick={closeMenu}
+            >
+              <span ref={newLinkIconRef} className={styles.newLinkIcon} aria-hidden="true">
+                +
+              </span>
               <span className={styles.newLinkText} aria-hidden="true">
                 Gerar link
               </span>

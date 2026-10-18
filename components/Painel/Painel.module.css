@@ -320,6 +320,7 @@
 .toastRegion {
   position: fixed;
   right: 16px;
+  /* Celular: acima do botão flutuante "Gerar link" (56px + margem). */
   bottom: 16px;
   z-index: 50;
   display: grid;
@@ -387,4 +388,11 @@
 .card[aria-disabled="true"] {
   height: 100%;
   opacity: 0.6;
+}
+
+/* Celular: os avisos sobem para não cobrir o botão flutuante "Gerar link". */
+@media (max-width: 767px) {
+  .toastRegion {
+    bottom: 88px;
+  }
 }

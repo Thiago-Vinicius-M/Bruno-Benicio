@@ -114,6 +114,39 @@
   outline-offset: 2px;
 }
 
+/* O GSAP gira o "+" (fabHover): precisa de caixa própria. */
+.newLinkIcon {
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Celular: botão flutuante redondo no canto inferior direito, com "+" e o texto. */
+@media (max-width: 767px) {
+  /* Espaço no fim do conteúdo para o botão flutuante não cobrir o último item
+     (.shell na frente: a regra base de .content vem depois neste arquivo). */
+  .shell .content {
+    padding-block-end: 96px;
+  }
+
+  .newLink {
+    position: fixed;
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
+    z-index: 30;
+    gap: 8px;
+    min-height: 56px;
+    padding: 0 22px 0 18px;
+    font-size: 1rem;
+    border-radius: 999px;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.45), 0 4px 14px rgb(255 195 66 / 0.3);
+  }
+
+  .newLinkIcon {
+    font-size: 1.5rem;
+    font-weight: var(--weight-medium);
+  }
+}
+
 .sidebar {
   grid-area: nav;
   position: sticky;
@@ -290,17 +323,6 @@ a.navLink:focus-visible,
 /* Celular: marca só com o logo, para o nome do usuário caber. */
 @media (max-width: 479px) {
   .brand span {
-    display: none;
-  }
-
-  /* Celular: só o "+", para caber ao lado do usuário e do Sair. */
-  .newLink {
-    width: 36px;
-    padding: 0;
-    font-size: 1.25rem;
-  }
-
-  .newLinkText {
     display: none;
   }
 

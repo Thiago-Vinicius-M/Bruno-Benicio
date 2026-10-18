@@ -34,7 +34,7 @@ export type CommercialLinkFormInput = {
 };
 
 type Props = {
-  /** Canais ATIVOS do próprio usuário. Nenhum vem pré-selecionado: a escolha é obrigatória. */
+  /** Canais ATIVOS do próprio usuário. Já vem selecionado o principal (ou o primeiro); com mais de um, o usuário pode trocar. */
   channels: WhatsAppChannel[];
   models: LinkModel[];
   canCustomizePrices: boolean;
@@ -80,7 +80,9 @@ export function LinkForm({ channels, models, canCustomizePrices, siteOrigin, sav
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string>();
   const [openedAt] = useState(() => Date.now());
-  const [channelId, setChannelId] = useState<string>("");
+  const [channelId, setChannelId] = useState<string>(
+    () => (channels.find((channel) => channel.is_primary) ?? channels[0])?.id ?? "",
+  );
   const [selected, setSelected] = useState<Record<string, boolean>>(() => Object.fromEntries(models.map((m) => [m.id, true])));
   const [tier, setTier] = useState<PriceTier>("private");
   const [prices, setPrices] = useState<Record<string, string>>(() => tierPrices(models, "private"));
